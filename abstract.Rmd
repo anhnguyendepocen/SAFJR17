@@ -1,0 +1,18 @@
+---
+title: Direct likelihood maximisation using numerical quadrature to approximate intractable
+  terms
+author: "Alessandro Gasparini"
+date: '`r Sys.Date()`'
+output: pdf_document
+classoption: a4paper, oneside
+documentclass: article
+fontsize: 12pt
+csl: elsevier_titles.csl
+bibliography: bib.bib
+---
+
+# Abstract
+
+The likelihood function of modern, complex survival analysis models often includes terms that are analytically intractable. For instance, fitting survival models with random effects requires integrating over the - potentially multi-dimensional - distribution of the random effects. In such settings, there are two options: direct likelihood maximisation by replacing the intractable integral with an approximation, or indirect maximisation via ad-hoc algorithms (the most common being the expectation-maximisation [EM] algorithm). Historically, the latter has been the de facto primary choice in a wide variety of applications, with the paper first describing the EM algorithm [@dempster_1977] cited approximately 20,000 times since its publication. Nevertheless, implementing the EM algorithm requires deriving and coding the E and M steps which could be challenging; hence, when the (log-)likelihood function can be easily evaluated, direct maximisation is often much easier to implement. An example is given by survival models with a frailty term: maximising the likelihood function requires integrating over the distribution of the frailty, and a closed-form solution is not always readily available. However, evaluating the likelihood is straightforward and integrating over the random effects can be swiftly done using numerical quadrature. We show that even when analytical formulae are available, as in survival models with a Gamma-distributed frailty term, direct likelihood maximisation via numerical quadrature yields accurate estimates and it is easy to set-up.
+
+# References
