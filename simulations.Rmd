@@ -1,0 +1,267 @@
+---
+title: Simulations
+author: "Alessandro Gasparini"
+date: '`r Sys.Date()`'
+output: pdf_document
+classoption: a4paper, oneside
+documentclass: article
+fontsize: 11pt
+csl: elsevier_titles.csl
+bibliography: bib.bib
+---
+
+# Rationale
+
+We want to show that Gaussian quadrature performs well even in situations where analytical formulae are available.
+
+# Settings
+
+Running $1000$ simulations, assuming a Weibull baseline hazard with given shape parameter $p = ...$ and scale parameter $\lambda = ...$. We generate survival times $s$ using the approach of Bender _et al_.[@bender_2005]; we generate censoring time $c$ using the same approach, but without including covariates in the calculation. Then, the observed time will be defined as $t = \text{min}(s, c)$ and the event indicator variable as $d = I(s \le c)$.
+
+Varying:
+
+1- number of individuals per cluster: $100$, $500$, $1000$ individuals - $1$, $10$, $25$ clusters (for shared frailties);
+
+2- treatment effect: positive, negative, null;
+
+3- variance of the frailty term: small, medium, large.
+
+# Simulation strategy
+
+1- analytical formulas;
+
+2- Gaussian quadrature with $x$, $y$, $z$ knots.
+
+We report on:
+
+1- average estimate of interest \(\bar{\hat{\beta}} = 1 / B \times \sum_{i = 1}^B \hat{\beta}_i\);
+
+2- average within-simulation standard error [SE] \(\sum_{i = 1} ^ B \text{SE}(\hat{\beta}_i) / B\) and empirical SE \(\sqrt{\left[ 1 / (B - 1) \right] \sum_{i = 1} ^ B (\hat{\beta}_i - \bar{\hat{\beta}}) ^ 2}\);
+
+3- bias \(\delta = \bar{\hat{\beta}} - \beta\), percentage bias \(\frac{\bar{\hat{\beta}} - \beta}{\beta} \times 100\), or standardised bias  \(\frac{\bar{\hat{\beta}} - \beta}{\text{SE}(\hat{\beta})} \times 100\);
+
+4- mean square error \((\bar{\hat{\beta}} - \beta) ^ 2 + \text{SE}(\hat{\beta}) ^ 2\);
+
+5- coverage probability, i.e. the proportion of times the \(100(1 - \alpha)\%\) confidence interval \(\hat{\beta}_i \pm Z_{1-\alpha/2} \times \text{SE}(\hat{\beta}_i)\) include \(\beta\), \(\forall i = 1, \dots, B\).
+
+# Statistical methods
+
+## Weibull parametric survival model
+
+We use a Weibull parametric survival model with a Gamma frailty term via the proportional hazards parametrisation:
+
+\[
+h(t_i) = h_0(t) g(X_i),
+\]
+
+with \(g(X_i)\) non-negative function of the covariates, usually \(g(X_i) = \exp(X_i \beta)\).
+
+In our setting:
+
+\[
+h_0(t) = p t ^ {p - 1},
+\]
+
+the survivor function is
+
+\[
+S(t) = \exp(-\lambda_i t_i ^ p)
+\]
+
+with parametrisation
+
+\[
+\lambda_i = \exp(X_i \beta).
+\]
+
+Hence, the Weibull parametric survival model has hazard function:
+
+\[
+h(t) = p \lambda t ^ {p - 1}.
+\]
+
+The individual contribution to the likelihood is:
+
+\[
+L_i = h(t_i) ^ d_i S(t_i),
+\]
+
+where \(d_i\) is the event indicator variable.
+
+The overall likelihood is the product of the individual contributions:
+
+\[
+L = \prod_{i = 1} ^ n L_i.
+\]
+
+Taking the natural logarithm of the likelihood for ease of computation:
+
+\[
+\begin{aligned}
+\log L &= \sum_{i = 1} ^ n \left[ d_i \log f_i(t_i) + (1 - d_i) \log S_i(t_i) \right] = \\
+       &= \sum_{i = 1} ^ n \left[ d_i \log h_i(t_i) + \log S_i(t_i) \right]
+\end{aligned}
+\]
+
+## Frailty models
+
+A frailty model is a survival model with unobservable heterogeneity. At the observation level, the frailty is introduced as an unobservable multiplicative effect \(\alpha\) on the hazard function:
+
+\[
+h(t | \alpha) = \alpha h(t)
+\]
+
+The survivor function given the frailty can be written as:
+
+\[
+S(t | \alpha) = \cdots = S(t) ^ \alpha
+\]
+
+As \(\alpha\) is unobservable, it must be integrated out of \(S(t | \alpha)\) to obtain the unconditional survivor function:
+
+\[
+S_{\theta}(t) = \int S(t|\alpha)g(\alpha) \ d\alpha = \int \left[ S(t) \right] ^ \alpha g(\alpha) \ d\alpha
+\]
+
+Given the unconditional survivor function, we can obtain the unconditional hazard and density (and consequently the likelihood) in the usual way:
+
+\[
+f_{\theta}(t) = - \frac{d}{dt} S_{\theta}(t) 
+\]
+
+\[
+h_{\theta}(t) = \frac{f_{\theta}(t)}{S_{\theta}(t)}
+\]
+
+A common choice for the frailty distribution \(g(\alpha)\) is the Gamma distribution. In particular, for mathematical tractability, a \(Gamma(1/\theta, \theta)\) distribution is often used. 
+
+A \(Gamma(a, b)\) distribution has probability density function 
+
+\[
+g(x) = \frac{x ^ {a - 1} \exp(-x / b)}{\Gamma(a) b ^ a}.
+\]
+
+Using the aforementioned \(Gamma(1 / \theta, \theta)\) distribution, the survivor function conditional on the frailty can be written as:
+
+\[
+S_\theta(t) = \left[ 1 - \theta \log \left\{ S(t) \right\} \right] ^ {-1 / \theta}
+\]
+
+Thus, it follows that the log-likelihood can be written as:
+
+\[
+\log L = \sum_{i = 1} ^ n \left[ d_i \log h_i(t_i) - (\theta ^ {-1} + d_i) \log \left\{ 1 - \theta \log S_i(t_i) \right\} \right]
+\]
+
+## Shared-frailty models
+
+A generalisation of frailty models is the shared-frailty model, where the frailty is assumed to be group-specific. For observation \(j\) from the \(i\)-th group, the hazard is:
+
+\[
+h_{ij}(t | \alpha_i) = \alpha_i h_{ij}(t),
+\]
+
+where \(h_{ij}(t) = h(t | X_{ij})\), i.e. the individual hazard given covariates \(X_{ij}\).
+
+In a shared frailty model, the frailty is common to a group of observations. Thus, to form an unconditional likelihood, the frailties must be integrated out at the group level. 
+
+The contribution to the likelihood for the \(ij\)-th individual, given \(\alpha_i\):
+
+\[
+L_{ij}(\alpha_i) = S_{ij}(t_{ij}) ^ {\alpha_i} \left[ \alpha_i h_{ij}(t_{ij}) \right] ^ {d_{ij}}
+\]
+
+Define \(D_i = \sum_j d_{ij}\) as the number of failures in the \(i\)-th group. The log-likelihood contribution for the \(i\)-th group is:
+
+\[
+L_i(\alpha_i) = \alpha_i ^ {D_i} \prod_{j = 1} ^ {n_i} \left[ S_{ij}(t_{ij}) ^ {\alpha_i} \left( h_{ij}(t_{ij}) \right) ^ {d_{ij}} \right]
+\]
+
+Integrating out \(\alpha_i\), we can obtain the unconditional contribution to the likelihood:
+
+\[
+L_i = \int L_i(\alpha_i) g(\alpha_i) \ d \alpha_i
+\]
+
+If the frailty is Gamma-distributed, it is possible to derive an analytical form for the group contribution to the likelihood:
+
+\[
+\begin{aligned}
+\log L_i =& \sum_{j = 1} ^ {n_i} d_{ij} \log h_{ij}(t_{ij}) - (1 / \theta + D_i) \log \left\{ 1 - \theta \sum_{j = 1} ^ {n_i} \log S_{ij}(t_{ij}) \right\} + \\
+          &D_i \log \theta + \log \Gamma(1 / \theta + D_i) - \log \Gamma(1 / \theta),
+\end{aligned}
+\]
+
+with the overall log-likelihood being, for $N$ clusters,
+
+\[
+\log L = \sum_{i = 1} ^ {N} \log L_i. 
+\]
+
+## Gaussian quadrature
+
+In numerical analysis, a quadrature rule is an approximation of the definite integral of a function, usually via a weighted sum of function values at specified points within the domain of integration. An \(n\)-point Gaussian quadrature rule is a quadrature rule where the approximation is exact for polynomials of degree \(2n - 1\) or less.
+A generic \(n\)-point Gaussian quadrature rule for approximating a function \(f(x)\) over its domain \(D\) can be stated as:
+
+\[
+\int_D f(x) \ dx \approx \sum_{i = 1} ^ n w_i f(x_i)
+\]
+
+If the integrated function can be written as \(f(x) = w(x) g(x)\), the quadrature rule becomes
+
+\[
+\int_D f(x) \ dx = \int_D w(x)g(x) \ dx \approx \sum_{i = 1} ^ n w_i g(x_i)
+\]
+
+A common weight function \(w(x) = e ^ {-x ^ 2}\) yields a so-called Gauss-Hermite quadrature rule. Further details in @liu_1994.
+
+In the context of parametric survival models with frailty terms, the term we would wish to approximate is the frailty density in the likelihood function. The cluster-specific unconditional likelihood, for Gamma-distributed frailties \((\alpha_i)\), is:
+
+\[
+\begin{aligned}
+L_i &= \int_0 ^ {+ \infty} L_i(\alpha_i) g(\alpha_i) \ d \alpha_i \\
+    &= \int_0 ^ {+ \infty} \alpha_i ^ {D_i} \prod_{j = 1} ^ {n_i} \left[ S_{ij}(t_{ij}) ^ {\alpha_i} h_{ij}(t_{ij}) ^ {d_{ij}} \right] \frac{\alpha ^ {1 / \theta - 1} \exp(- \alpha / \theta)}{\Gamma(1 / \theta) \theta ^ {1 / \theta}} \ d \alpha_i = \\
+    &= \int_0 ^ {+ \infty} \alpha_i ^ {D_i} \prod_{j = 1} ^ {n_i} \left[ \left( \exp \left( -t_{ij} ^ p \exp \left( p \lambda t_{ij} ^ {p - 1} \exp \left( X_{ij} \beta \right) \right) \right) \right) ^ {\alpha_i} \left( p \lambda t_{ij} ^ {p - 1} \exp \left( X_{ij} \beta \right) \right) ^ {d_{ij}} \right] \times \\
+    & \qquad \times \frac{\alpha_i ^ {1 / \theta - 1} \exp(- \alpha_i / \theta)}{\Gamma(1 / \theta) \theta ^ {1 / \theta}} \ d \alpha_i
+\end{aligned}
+\]
+
+The integral is over the \(0, \  +\infty\) domain, hence we need to apply the so-called Gauss-Laguerre quadrature rule. The Gauss-Laguerre quadrature rule is used to approximate integrals of the kind
+
+\[
+\int_0 ^ {+\infty} x ^ \alpha e ^ {-x} f(x) \ dx \approx \sum_{i = 1} ^ n w_i f(x_i),
+\]
+
+for some real number \(\alpha > -1\), to handle singularities at \(x = 0\). We will assume \(\alpha = 0\). In our more general function, where it is not straightforward to extract the weight term (i.e. \(e ^ {-\alpha}\)), we apply the following transformation:
+
+\[
+\int_0 ^ {+\infty} f(x) \ dx = \int_0 ^ {+\infty} e ^ x e ^ {-x} f(x) \ dx = \int_0 ^ {+\infty} e ^ {-x} g(x) \ dx \approx \sum_{i = 1} ^ n w_i g(x_i)
+\]
+
+This approach is analytically valid, but it may not always be numerically stable.
+
+## Parametric survival model with a random treatment effect
+
+In addition to the abovementioned model, we will estimate a Weibull parametric survival model with a Normal-distributed random effect:
+
+\[
+h_{ij} = \lambda p t ^ {p - 1} \exp((b_{1i} + \beta_1) X_{1ij}),
+\]
+
+with \(i\) identifying the cluster-level and \(j\) identifying the individual-level. This model requires integrating over the random effects to estimate the model parameters. The \(i\)-th cluster contribution to the likelihood is:
+
+\[
+\begin{aligned}
+L_i &= \int_{-\infty}^{+\infty} \left[ \prod_{j = 1} ^ {n_i} h_{ij}(t_{ij}) ^ {d_{ij}} S_{ij}(t_{ij}) \right] p(b_i) \ db_i = \\
+    &= \int_{-\infty}^{+\infty} \left[ \prod_{j = 1} ^ {n_i} \left( \lambda p t_{ij} ^ {p - 1} \exp((b_{1i} + \beta_1) X_{1ij}) \right) ^ {d_{ij}} \left( \exp(-\lambda t_{ij} ^ p \exp((b_{1i} + \beta_1) X_{1ij}) \right) \right] \times \\
+    & \qquad \times \frac{1}{\sqrt{2 \sigma ^ 2 \pi}} \ \exp \left( -\frac{b_i ^ 2}{2 \sigma ^ 2} \right) \ db_i = \\
+    &= \frac{1}{\sqrt{2 \sigma ^ 2 \pi}} \int_{-\infty}^{+\infty} \left[ \prod_{j = 1} ^ {n_i} \left( \lambda p t_{ij} ^ {p - 1} \exp((b_{1i} + \beta_1) X_{1ij}) \right) ^ {d_{ij}} \left( \exp(-\lambda t_{ij} ^ p \exp((b_{1i} + \beta_1) X_{1ij}) \right) \right] \times \\
+    & \qquad \times \exp \left( -\frac{b_i ^ 2}{2 \sigma ^ 2} \right) \ db_i \\
+\end{aligned}
+\]
+
+# Results
+
+Results in this section.
+
+# References
