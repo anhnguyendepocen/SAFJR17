@@ -42,4 +42,4 @@ s = foreach(seeds = round(runif(1000, 0, 1e6)), .combine = rbind) %dopar% {
 stopCluster(cl)
 
 # save the results
-saveRDS(s, paste0("s_normal_gq_", TID, ".RDS"))
+saveRDS(s, paste0("Results/s_normal_gq_", TID, ".RDS"))
