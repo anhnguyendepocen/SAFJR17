@@ -4,6 +4,7 @@ gc()
 source("functions.R")
 library(foreach)
 library(doSNOW)
+library(parallel)
 
 # define scenarios
 scenarios = expand.grid(
@@ -19,7 +20,7 @@ scenarios = expand.grid(
 TID = commandArgs(trailingOnly = T)
 
 # setup parallel cluster
-cl <- makeCluster(5, type = "SOCK")
+cl <- makeCluster(detectCores(), type = "SOCK")
 registerDoSNOW(cl)
 
 # generate seeds for the simulation
