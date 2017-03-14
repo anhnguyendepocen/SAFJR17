@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#PBS -o Output/out_normal_gq_adjusted.txt
+#PBS -e Error/err_normal_gq_adjusted.txt
+#PBS -N safjr17_sim_normal_gq_adjusted
+#PBS -l walltime=24:00:00
+#PBS -l pvmem=4gb
+#PBS -l nodes=1:ppn=14
+#PBS -m bea
+#PBS -t 8,23,89,242,233,224,215,206,197,188,179,170
+
+TID=$PBS_ARRAYID
+cd $PBS_O_WORKDIR
+module load R
+Rscript job_normal_gq_adjusted.R ${TID}
