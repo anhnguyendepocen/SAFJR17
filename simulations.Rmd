@@ -2,7 +2,12 @@
 title: Simulations
 author: "Alessandro Gasparini"
 date: '`r Sys.Date()`'
-output: pdf_document
+output: 
+  html_document:
+    toc: true
+    df_print: paged
+    rows.print: 20
+    theme: readable
 classoption: a4paper, oneside
 documentclass: article
 fontsize: 11pt
@@ -14,35 +19,33 @@ bibliography: bib.bib
 
 We want to show that Gaussian quadrature performs well even in situations where analytical formulae are available.
 
-# Settings
+# Simulation strategy
 
-Running $1000$ simulations, assuming a Weibull baseline hazard with given shape parameter $p = ...$ and scale parameter $\lambda = ...$. We generate survival times $s$ using the approach of Bender _et al_.[@bender_2005]; we generate censoring time $c$ using the same approach, but without including covariates in the calculation. Then, the observed time will be defined as $t = \text{min}(s, c)$ and the event indicator variable as $d = I(s \le c)$.
+Running $1000$ simulations, assuming a Weibull baseline hazard with given shape parameter $p = 1$ and scale parameter $\lambda = 0.5$. We generate survival times $s$ using the approach of Bender _et al_.[@bender_2005]; we generate censoring time $c$ using the same approach, but without including covariates in the calculation. Then, the observed time will be defined as $t = \text{min}(s, c)$ and the event indicator variable as $d = I(s \le c)$.
 
-Varying:
+We compare the use of analytical formulae against Gaussian quadrature varying:
 
 1- number of individuals per cluster: $100$, $500$, $1000$ individuals - $1$, $10$, $25$ clusters (for shared frailties);
 
-2- treatment effect: positive, negative, null;
+2- treatment effect: positive \(0.5\), negative \(-0.5\), null \(0.0\);
 
-3- variance of the frailty term: small, medium, large.
+3- variance of the frailty term: small \(0.25\), medium \(0.50\), large \(0.75\).
 
-# Simulation strategy
-
-1- analytical formulas;
-
-2- Gaussian quadrature with $x$, $y$, $z$ knots.
+4- number of quadrature knots: \(35\), \(74\), \(105\).
 
 We report on:
 
-1- average estimate of interest \(\bar{\hat{\beta}} = 1 / B \times \sum_{i = 1}^B \hat{\beta}_i\);
+1- average estimate of interest \(\bar{\hat{\beta}} = 1 / B \times \sum_{i = 1}^B \hat{\beta}_i\), and median estimate of interest;
 
-2- average within-simulation standard error [SE] \(\sum_{i = 1} ^ B \text{SE}(\hat{\beta}_i) / B\) and empirical SE \(\sqrt{\left[ 1 / (B - 1) \right] \sum_{i = 1} ^ B (\hat{\beta}_i - \bar{\hat{\beta}}) ^ 2}\);
+2- average within-simulation standard error [SE] \(\sum_{i = 1} ^ B \text{SE}(\hat{\beta}_i) / B\) and median within-simulation standard error;
 
-3- bias \(\delta = \bar{\hat{\beta}} - \beta\), percentage bias \(\frac{\bar{\hat{\beta}} - \beta}{\beta} \times 100\), or standardised bias  \(\frac{\bar{\hat{\beta}} - \beta}{\text{SE}(\hat{\beta})} \times 100\);
+3- empirical SE \(\sqrt{\left[ 1 / (B - 1) \right] \sum_{i = 1} ^ B (\hat{\beta}_i - \bar{\hat{\beta}}) ^ 2}\);
 
-4- mean square error \((\bar{\hat{\beta}} - \beta) ^ 2 + \text{SE}(\hat{\beta}) ^ 2\);
+4- bias \(\delta = \bar{\hat{\beta}} - \beta\);
 
-5- coverage probability, i.e. the proportion of times the \(100(1 - \alpha)\%\) confidence interval \(\hat{\beta}_i \pm Z_{1-\alpha/2} \times \text{SE}(\hat{\beta}_i)\) include \(\beta\), \(\forall i = 1, \dots, B\).
+5- mean square error \((\bar{\hat{\beta}} - \beta) ^ 2 + \text{SE}(\hat{\beta}) ^ 2\);
+
+6- coverage probability, i.e. the proportion of times the \(100(1 - \alpha)\%\) confidence interval \(\hat{\beta}_i \pm Z_{1-\alpha/2} \times \text{SE}(\hat{\beta}_i)\) include \(\beta\), \(\forall i = 1, \dots, B\).
 
 # Statistical methods
 
@@ -262,6 +265,346 @@ L_i &= \int_{-\infty}^{+\infty} \left[ \prod_{j = 1} ^ {n_i} h_{ij}(t_{ij}) ^ {d
 
 # Results
 
-Results in this section.
+```{r, include = FALSE}
+# Setting knitr options:
+if (!requireNamespace("knitr")) install.packages("knitr")
+knitr::opts_chunk$set(tidy = TRUE, echo = FALSE, warning = FALSE, dpi = 300, fig.retina = 2)
+
+# Loading packages and data:
+
+if (!requireNamespace("pacman")) install.packages("pacman")
+pacman::p_load("dplyr", "tidyr", "ggplot2", "ggthemes", "stringr")
+s_an_vs_gq <- lapply(list.files(path = "Results/", pattern = "an_vs_gq", full.names = T), readRDS) %>% 
+  bind_rows()
+s_normal_gq <- lapply(list.files(path = "Results/", pattern = "normal_gq", full.names = T), readRDS) %>% 
+  bind_rows()
+```
+
+## Analytical formulae against Gaussian quadrature
+
+```{r}
+# Process the results and compute statistics of interest:
+s_an_vs_gq_summary <- s_an_vs_gq %>% 
+  mutate(AF_trt_bias = AF_trt - treatment_effect,
+         GQ_trt_bias = GQ_trt - treatment_effect,
+         AF_theta_bias = AF_theta - log(frailty_theta),
+         GQ_theta_bias = GQ_theta - log(frailty_theta),
+         AF_lambda_bias = AF_lambda - log(lambda),
+         GQ_lambda_bias = GQ_lambda - log(lambda),
+         AF_p_bias = AF_p - log(p),
+         GQ_p_bias = GQ_p - log(p),
+         AF_trt_covp = ifelse(treatment_effect >= (AF_trt - AF_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (AF_trt + AF_trt_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ_trt_covp = ifelse(treatment_effect >= (GQ_trt - GQ_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (GQ_trt + GQ_trt_se * qnorm(1 - 0.05/2)), 1, 0),
+         AF_theta_covp = ifelse(log(frailty_theta) >= (AF_theta - AF_theta_se * qnorm(1 - 0.05/2)) & log(frailty_theta) <= (AF_theta + AF_theta_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ_theta_covp = ifelse(log(frailty_theta) >= (GQ_theta - GQ_theta_se * qnorm(1 - 0.05/2)) & log(frailty_theta) <= (GQ_theta + GQ_theta_se * qnorm(1 - 0.05/2)), 1, 0),
+         AF_lambda_covp = ifelse(log(lambda) >= (AF_lambda - AF_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (AF_lambda + AF_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ_lambda_covp = ifelse(log(lambda) >= (GQ_lambda - GQ_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (GQ_lambda + GQ_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
+         AF_p_covp = ifelse(log(p) >= (AF_p - AF_p_se * qnorm(1 - 0.05/2)) & log(p) <= (AF_p + AF_p_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ_p_covp = ifelse(log(p) >= (GQ_p - GQ_p_se * qnorm(1 - 0.05/2)) & log(p) <= (GQ_p + GQ_p_se * qnorm(1 - 0.05/2)), 1, 0)) %>% 
+  group_by(n_individuals, n_clusters, frailty_theta, treatment_effect, ngl, lambda, p) %>% 
+  summarise(AF_convp = mean(AF_convergence == 0),
+            GQ_convp = mean(GQ_convergence == 0),
+            AF_convn = sum(AF_convergence == 0),
+            GQ_convn = sum(GQ_convergence == 0),
+            AF_trt_mean = mean(AF_trt, na.rm = TRUE),
+            GQ_trt_mean = mean(GQ_trt, na.rm = TRUE),
+            AF_trt_median = median(AF_trt, na.rm = TRUE),
+            GQ_trt_median = median(GQ_trt, na.rm = TRUE),
+            AF_trt_se_mean = mean(AF_trt_se, na.rm = TRUE),
+            GQ_trt_se_mean = mean(GQ_trt_se, na.rm = TRUE),
+            AF_trt_se_median = median(AF_trt_se, na.rm = TRUE),
+            GQ_trt_se_median = median(GQ_trt_se, na.rm = TRUE),
+            AF_trt_empse = sqrt((1 / (n() - 1)) * sum(AF_trt - AF_trt_mean) ^ 2),
+            GQ_trt_empse = sqrt((1 / (n() - 1)) * sum(GQ_trt - GQ_trt_mean) ^ 2),
+            AF_trt_bias = mean(AF_trt_bias, na.rm = TRUE),
+            GQ_trt_bias = mean(GQ_trt_bias, na.rm = TRUE),
+            AF_trt_covp = mean(AF_trt_covp, na.rm = TRUE),
+            GQ_trt_covp = mean(GQ_trt_covp, na.rm = TRUE),
+            AF_theta_mean = mean(AF_theta, na.rm = TRUE),
+            GQ_theta_mean = mean(GQ_theta, na.rm = TRUE),
+            AF_theta_median = median(AF_theta, na.rm = TRUE),
+            GQ_theta_median = median(GQ_theta, na.rm = TRUE),
+            AF_theta_se_mean = mean(AF_theta_se, na.rm = TRUE),
+            GQ_theta_se_mean = mean(GQ_theta_se, na.rm = TRUE),
+            AF_theta_se_median = median(AF_theta_se, na.rm = TRUE),
+            GQ_theta_se_median = median(GQ_theta_se, na.rm = TRUE),
+            AF_theta_empse = sqrt((1 / (n() - 1)) * sum(AF_theta - AF_theta_mean) ^ 2),
+            GQ_theta_empse = sqrt((1 / (n() - 1)) * sum(GQ_theta - GQ_theta_mean) ^ 2),
+            AF_theta_bias = mean(AF_theta_bias, na.rm = TRUE),
+            GQ_theta_bias = mean(GQ_theta_bias, na.rm = TRUE),
+            AF_theta_covp = mean(AF_theta_covp, na.rm = TRUE),
+            GQ_theta_covp = mean(GQ_theta_covp, na.rm = TRUE),
+            AF_lambda_mean = mean(AF_lambda, na.rm = TRUE),
+            GQ_lambda_mean = mean(GQ_lambda, na.rm = TRUE),
+            AF_lambda_median = median(AF_lambda, na.rm = TRUE),
+            GQ_lambda_median = median(GQ_lambda, na.rm = TRUE),
+            AF_lambda_se_mean = mean(AF_lambda_se, na.rm = TRUE),
+            GQ_lambda_se_mean = mean(GQ_lambda_se, na.rm = TRUE),
+            AF_lambda_se_median = median(AF_lambda_se, na.rm = TRUE),
+            GQ_lambda_se_median = median(GQ_lambda_se, na.rm = TRUE),
+            AF_lambda_empse = sqrt((1 / (n() - 1)) * sum(AF_lambda - AF_lambda_mean) ^ 2),
+            GQ_lambda_empse = sqrt((1 / (n() - 1)) * sum(GQ_lambda - GQ_lambda_mean) ^ 2),
+            AF_lambda_bias = mean(AF_lambda_bias, na.rm = TRUE),
+            GQ_lambda_bias = mean(GQ_lambda_bias, na.rm = TRUE),
+            AF_lambda_covp = mean(AF_lambda_covp, na.rm = TRUE),
+            GQ_lambda_covp = mean(GQ_lambda_covp, na.rm = TRUE),
+            AF_p_mean = mean(AF_p, na.rm = TRUE),
+            GQ_p_mean = mean(GQ_p, na.rm = TRUE),
+            AF_p_median = median(AF_p, na.rm = TRUE),
+            GQ_p_median = median(GQ_p, na.rm = TRUE),
+            AF_p_se_mean = mean(AF_p_se, na.rm = TRUE),
+            GQ_p_se_mean = mean(GQ_p_se, na.rm = TRUE),
+            AF_p_se_median = median(AF_p_se, na.rm = TRUE),
+            GQ_p_se_median = median(GQ_p_se, na.rm = TRUE),
+            AF_p_empse = sqrt((1 / (n() - 1)) * sum(AF_p - AF_p_mean) ^ 2),
+            GQ_p_empse = sqrt((1 / (n() - 1)) * sum(GQ_p - GQ_p_mean) ^ 2),
+            AF_p_bias = mean(AF_p_bias, na.rm = TRUE),
+            GQ_p_bias = mean(GQ_p_bias, na.rm = TRUE),
+            AF_p_covp = mean(AF_p_covp, na.rm = TRUE),
+            GQ_p_covp = mean(GQ_p_covp, na.rm = TRUE)) %>% 
+  mutate(AF_trt_mse = AF_trt_bias ^ 2 + AF_trt_empse ^ 2,
+         GQ_trt_mse = GQ_trt_bias ^ 2 + GQ_trt_empse ^ 2,
+         AF_theta_mse = AF_theta_bias ^ 2 + AF_theta_empse ^ 2,
+         GQ_theta_mse = GQ_theta_bias ^ 2 + GQ_theta_empse ^ 2,
+         AF_lambda_mse = AF_lambda_bias ^ 2 + AF_lambda_empse ^ 2,
+         GQ_lambda_mse = GQ_lambda_bias ^ 2 + GQ_lambda_empse ^ 2,
+         AF_p_mse = AF_p_bias ^ 2 + AF_p_empse ^ 2,
+         GQ_p_mse = GQ_p_bias ^ 2 + GQ_p_empse ^ 2)
+
+saveRDS(s_an_vs_gq_summary, "r_AF_vs_GQ/s_an_vs_gq_summary.RDS")
+```
+
+<center>
+<button type="button" onClick="document.getElementById('resIF').src='http://ag475.shinyapps.io/shinyapp'; this.parentNode.style.display = 'none';">Load results...</button>
+</center>
+
+<iframe id="resIF" style="border: none; width: 95%; height: 700px"></iframe>
+
+### Convergence
+
+Number of simulations converging:
+
+```{r}
+# By n_individuals:
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convn", stat)) %>%
+  ggplot(aes(x = factor(n_individuals), y = value, color = method)) +
+  geom_jitter() + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "N. of individuals per cluster", y = "N. of simulations converging", color = "")
+
+# By n_clusters:
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convn", stat)) %>%
+  ggplot(aes(x = factor(n_clusters), y = value, color = method)) +
+  geom_jitter() + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "N. of clusters", y = "N. of simulations converging", color = "")
+
+# By treatment_effect:
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convn", stat)) %>%
+  ggplot(aes(x = factor(treatment_effect), y = value, color = method)) +
+  geom_jitter() + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "Treatment effect", y = "N. of simulations converging", color = "")
+
+# By frailty_theta:
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convn", stat)) %>%
+  ggplot(aes(x = factor(frailty_theta), y = value, color = method)) +
+  geom_jitter() + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "Frailty variance", y = "N. of simulations converging", color = "")
+
+# By ngl:
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convn", stat)) %>%
+  ggplot(aes(x = factor(ngl), y = value, color = method)) +
+  geom_jitter() + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "Gauss-Laguerre knots", y = "N. of simulations converging", color = "")
+```
+
+Proportion of simualtions converging:
+
+```{r}
+# By n_individuals:
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convp", stat)) %>%
+  ggplot(aes(x = factor(n_individuals), y = value, color = method)) +
+  geom_jitter() + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "N. of individuals per cluster", y = "P. of simulations converging", color = "")
+
+# By n_clusters:
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convp", stat)) %>%
+  ggplot(aes(x = factor(n_clusters), y = value, color = method)) +
+  geom_jitter() + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "N. of clusters", y = "P. of simulations converging", color = "")
+
+# By treatment_effect:
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convp", stat)) %>%
+  ggplot(aes(x = factor(treatment_effect), y = value, color = method)) +
+  geom_jitter() + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "Treatment effect", y = "P. of simulations converging", color = "")
+
+# By frailty_theta:
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convp", stat)) %>%
+  ggplot(aes(x = factor(frailty_theta), y = value, color = method)) +
+  geom_jitter() + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "Frailty variance", y = "P. of simulations converging", color = "")
+
+# By ngl:
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convp", stat)) %>%
+  ggplot(aes(x = factor(ngl), y = value, color = method)) +
+  geom_jitter() + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "Gauss-Laguerre knots", y = "P. of simulations converging", color = "")
+```
+
+### Bias
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter() + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
+```
+
+### Coverage probability
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter() + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::percent) + 
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
+```
+
+## Gaussian quadrature with Normal frailty
+
+## Application to catheter data
+
+
 
 # References
