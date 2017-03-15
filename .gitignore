@@ -4,3 +4,4 @@
 *.RDS
 *.html
 .Rproj.user
+rsconnect/

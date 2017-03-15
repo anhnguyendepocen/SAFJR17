@@ -40,3 +40,7 @@ function(input, output) {
     digits = 10
   )
 }
+
+### Deploy to shinyapps.io with:
+# if (!requireNamespace("rsconnect")) install.packages("rsconnect")
+# rsconnect::deployApp("r_AF_vs_GQ")
