@@ -20,7 +20,7 @@ scenarios = expand.grid(
 TID = commandArgs(trailingOnly = T)
 
 # setup parallel cluster
-cl <- makeCluster(14, type = "SOCK")
+cl <- makeCluster(20, type = "SOCK")
 registerDoSNOW(cl)
 
 # generate seeds for the simulation
