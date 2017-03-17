@@ -10,13 +10,13 @@ library(dplyr)
 # define scenarios
 scenarios = expand.grid(
   n_individuals = c(25, 50, 250, 500, 1000),
-  n_clusters = c(10, 25, 100, 200),
+  n_clusters = c(15, 30, 100, 200),
   frailty_theta = c(0.25, 0.50, 0.75),
   treatment_effect = c(-0.50, 0.00, 0.50),
   ngl = c(35, 75, 105),
   lambda = 0.5,
   p = 1) %>%
-  filter((n_individuals %in% c(25, 50) & n_clusters %in% c(100, 200)) | (n_individuals %in% c(250, 500, 1000) & n_clusters %in% c(10, 25)))
+  filter((n_individuals %in% c(25, 50) & n_clusters %in% c(100, 200)) | (n_individuals %in% c(250, 500, 1000) & n_clusters %in% c(15, 30)))
 
 # get parameter from array id
 TID = commandArgs(trailingOnly = T)

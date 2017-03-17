@@ -151,7 +151,17 @@ sim_an_vs_gq <- function(seed, n_individuals, n_clusters, frailty_theta, treatme
   if (o_an$convergence != 0) {
     o_an$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
   } else {
-    o_an$se = sqrt(diag(solve(o_an$hessian)))
+    o_an$se = tryCatch(sqrt(diag(solve(o_an$hessian))),
+                       error = function(cond) {
+                         return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
+    if (any(is.na(o_an$se))) {
+      o_an$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_an$value = NA
+      o_an$counts = c(`function` = NA, `gradient` = NA)
+      o_an$convergence = -99
+      o_an$message = NULL
+      o_an$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
+    }
   }
 
   o_gq = tryCatch(optim(par = start, fn = mll_quad, method = "BFGS", hessian = TRUE),
@@ -161,7 +171,17 @@ sim_an_vs_gq <- function(seed, n_individuals, n_clusters, frailty_theta, treatme
   if (o_gq$convergence != 0) {
     o_gq$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
   } else {
-    o_gq$se = sqrt(diag(solve(o_gq$hessian)))
+    o_gq$se = tryCatch(sqrt(diag(solve(o_gq$hessian))),
+                       error = function(cond) {
+                         return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
+    if (any(is.na(o_gq$se))) {
+      o_gq$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_gq$value = NA
+      o_gq$counts = c(`function` = NA, `gradient` = NA)
+      o_gq$convergence = -99
+      o_gq$message = NULL
+      o_gq$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
+    }
   }
 
   output = data.frame(seed = seed, n_individuals = n_individuals, n_clusters = n_clusters, frailty_theta = frailty_theta, treatment_effect = treatment_effect, lambda = lambda, p = p, ngl = ngl, AF_p = o_an$par[1], AF_p_se = o_an$se[1], AF_lambda = o_an$par[2], AF_lambda_se = o_an$se[2], AF_theta = o_an$par[3], AF_theta_se = o_an$se[3], AF_trt = o_an$par[4], AF_trt_se = o_an$se[4], AF_value = -o_an$value, AF_convergence = o_an$convergence, GQ_p = o_gq$par[1], GQ_p_se = o_gq$se[1], GQ_lambda = o_gq$par[2], GQ_lambda_se = o_gq$se[2], GQ_theta = o_gq$par[3], GQ_theta_se = o_gq$se[3], GQ_trt = o_gq$par[4], GQ_trt_se = o_gq$se[4], GQ_value = -o_gq$value, GQ_convergence = o_gq$convergence)
@@ -245,9 +265,19 @@ sim_normal_gq <- function(seed, n_individuals, n_clusters, frailty_sigma, treatm
     error = function(cond) return(error_obj))
 
   if (o_gq$convergence != 0) {
-    o_gq$se = c(p = NA, lambda = NA, sigma = NA, trt = NA)
+    o_gq$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
   } else {
-    o_gq$se = sqrt(diag(solve(o_gq$hessian)))
+    o_gq$se = tryCatch(sqrt(diag(solve(o_gq$hessian))),
+                       error = function(cond) {
+                         return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
+    if (any(is.na(o_gq$se))) {
+      o_gq$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_gq$value = NA
+      o_gq$counts = c(`function` = NA, `gradient` = NA)
+      o_gq$convergence = -99
+      o_gq$message = NULL
+      o_gq$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
+    }
   }
 
   output = data.frame(seed = seed, n_individuals = n_individuals, n_clusters = n_clusters, frailty_sigma = frailty_sigma, treatment_effect = treatment_effect, lambda = lambda, p = p, ngh = ngh, GQ_p = o_gq$par[1], GQ_p_se = o_gq$se[1], GQ_lambda = o_gq$par[2], GQ_lambda_se = o_gq$se[2], GQ_sigma = o_gq$par[3], GQ_sigma_se = o_gq$se[3], GQ_trt = o_gq$par[4], GQ_trt_se = o_gq$se[4], GQ_value = -o_gq$value, GQ_convergence = o_gq$convergence)
