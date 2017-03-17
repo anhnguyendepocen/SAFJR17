@@ -14,8 +14,8 @@ scenarios = expand.grid(
   frailty_sigma = c(0.25, 0.50, 0.75),
   treatment_effect = c(-0.50, 0.00, 0.50),
   ngl = c(35, 75, 105),
-  lambda = 0.5,
-  p = 1) %>%
+  lambda = 3,
+  p = 1.5) %>%
   filter((n_individuals %in% c(25, 50) & n_clusters %in% c(100, 200)) | (n_individuals %in% c(250, 500, 1000) & n_clusters %in% c(15, 30)))
 
 # get parameter from array id
