@@ -16,8 +16,13 @@ df <- data %>%
 function(input, output) {
   output$table <- renderTable(
     df %>%
-      filter(n_individuals == input$n_individuals,
-             n_clusters == input$n_clusters,
+      filter(n_individuals == ifelse(input$sample_size %in% c("25 individuals X 100 clusters", "25 individuals X 200 clusters"), 25,
+                                     ifelse(input$sample_size %in% c("50 individuals X 200 clusters", "50 individuals X 100 clusters"), 50,
+                                            ifelse(input$sample_size %in% c("250 individuals X 15 clusters", "250 individuals X 30 clusters"), 250,
+                                                   ifelse(input$sample_size %in% c("500 individuals X 15 clusters", "500 individuals X 30 clusters"), 500, 1000)))),
+             n_clusters == ifelse(input$sample_size %in% c("250 individuals X 15 clusters", "500 individuals X 15 clusters", "1000 individuals X 15 clusters"), 15,
+                                  ifelse(input$sample_size %in% c("250 individuals X 30 clusters", "500 individuals X 30 clusters", "1000 individuals X 30 clusters"), 30,
+                                         ifelse(input$sample_size %in% c("25 individuals X 100 clusters", "50 individuals X 100 clusters"), 100, 200))),
              frailty_theta == input$frailty_theta,
              treatment_effect == input$treatment_effect,
              ngl == input$ngl) %>%
