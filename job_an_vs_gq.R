@@ -9,27 +9,27 @@ library(dplyr)
 
 # define scenarios
 scenarios = expand.grid(
-  n_individuals = c(25, 50, 250, 500, 1000),
+  n_individuals = c(25, 50, 100, 250, 500, 1000),
   n_clusters = c(15, 30, 100, 200),
-  frailty_theta = c(0.25, 0.50, 0.75),
+  frailty_theta = c(0.25, 0.50, 1.00),
   treatment_effect = c(-0.50, 0.00, 0.50),
-  ngl = c(35, 75, 105),
+  ngl = c(15, 35, 75, 105),
   lambda = 0.5,
   p = 1) %>%
-  filter((n_individuals %in% c(25, 50) & n_clusters %in% c(100, 200)) | (n_individuals %in% c(250, 500, 1000) & n_clusters %in% c(15, 30)))
+  filter((n_individuals %in% c(25, 50, 100) & n_clusters %in% c(100, 200)) | (n_individuals %in% c(100, 250, 500, 1000) & n_clusters %in% c(15, 30)))
 
 # get parameter from array id
 TID = commandArgs(trailingOnly = T)
 
 # setup parallel cluster
-cl <- makeCluster(10, type = "SOCK")
+cl <- makeCluster(14, type = "SOCK")
 registerDoSNOW(cl)
 
 # generate seeds for the simulation
 set.seed(TID)
 
 # run 1000 simulations for the current scenario
-s = foreach(seeds = round(runif(1000, 0, 1e6)), .combine = rbind) %dopar% {
+s = foreach(seeds = round(runif(1000, 0, 1e9)), .combine = rbind) %dopar% {
   with(scenarios[TID,],
        sim_an_vs_gq(seed = seeds,
                     n_individuals = n_individuals,

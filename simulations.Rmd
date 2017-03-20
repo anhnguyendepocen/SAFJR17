@@ -31,9 +31,9 @@ We compare the use of analytical formulae against Gaussian quadrature varying:
 
 2- treatment effect: positive \(0.5\), negative \(-0.5\), null \(0.0\);
 
-3- variance of the frailty term: small \(0.25\), medium \(0.50\), large \(0.75\);
+3- variance of the frailty term: small \(0.25\), medium \(0.50\), large \(1.00\);
 
-4- number of quadrature knots: \(35\), \(75\), \(105\).
+4- number of quadrature nodes: \(15\), \(35\), \(75\), \(105\).
 
 ## Simulation 2: log-normal frailty
 
@@ -43,9 +43,9 @@ We run \(1000\) simulations under different scenarios, assuming a Weibull baseli
 
 2- treatment effect: positive \(0.5\), negative \(-0.5\), null \(0.0\);
 
-3- variance of the frailty term: small \(0.25\), medium \(0.50\), large \(0.75\);
+3- variance of the frailty term: small \(0.25\), medium \(0.50\), large \(1.00\);
 
-4- number of quadrature knots: \(35\), \(75\), \(105\).
+4- number of quadrature nodes: \(15\), \(35\), \(75\), \(105\).
 
 ## Reporting
 
@@ -434,6 +434,23 @@ s_an_vs_gq_summary %>%
   theme_bw() + 
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "N. of clusters", y = "N. of simulations converging", color = "")
+
+# By n_individuals x n_clusters
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convn", stat)) %>%
+  rename(`N. individuals` = n_individuals, `N. clusters` = n_clusters) %>% 
+  ggplot(aes(x = method, y = value)) +
+  facet_grid(`N. clusters` ~ `N. individuals` , labeller = label_both) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() + 
+  labs(x = "", y = "N. of simulations converging")
 
 # By treatment_effect:
 s_an_vs_gq_summary %>%
@@ -825,6 +842,23 @@ s_normal_gq_summary %>%
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
   labs(x = "N. of clusters", y = "N. of simulations converging")
+
+# By n_individuals x n_clusters
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convn", stat)) %>%
+  rename(`N. individuals` = n_individuals, `N. clusters` = n_clusters) %>% 
+  ggplot(aes(x = 1, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  facet_grid(`N. clusters` ~ `N. individuals` , labeller = label_both) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  labs(x = "", y = "N. of simulations converging")
 
 # By treatment_effect:
 s_normal_gq_summary %>%

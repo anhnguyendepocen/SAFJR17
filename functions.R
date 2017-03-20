@@ -49,12 +49,13 @@ gen_data_normal <- function(seed, n_individuals, n_clusters, frailty_sigma, trea
 # function for estimating a model with a (potentially shared) Gamma frailty term
 sim_an_vs_gq <- function(seed, n_individuals, n_clusters, frailty_theta, treatment_effect, lambda, p, ngl = 35) {
   # packages
+  # seed = 878765949; n_individuals = 1000; n_clusters = 15; frailty_theta = 0.25; treatment_effect = 0.0; lambda = 0.5; p = 1.0; ngl = 15
+
   if (!requireNamespace("pacman")) install.packages("pacman")
-  pacman::p_load("pracma")
+  pacman::p_load("pracma", "numDeriv", "minqa")
 
   if (ngl < 2) stop("number of knots 'ngl' needs to be >= 2")
   # generate data
-  # seed = 123; n_individuals = 100; n_clusters = 5; frailty_theta = 0.25; treatment_effect = 0.50; lambda = 0.50; p = 1; ngl = 35
   df = gen_data(seed = seed,
                 n_individuals = n_individuals,
                 n_clusters = n_clusters,
@@ -143,11 +144,54 @@ sim_an_vs_gq <- function(seed, n_individuals, n_clusters, frailty_theta, treatme
     hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
   )
 
+  # functions for converting objects from nlm and bobywa to optim's format
+  restructure_nlm = function(obj) {
+    ret = list(
+      par = obj$estimate,
+      value = obj$minimum,
+      counts = c(`function` = NA, `gradient` = NA),
+      convergence = ifelse(obj$code %in% c(1, 2), 0, obj$code),
+      message = NULL,
+      hessian = obj$hessian)
+    return(ret)
+  }
+  restructure_bobyqa_mll = function(obj) {
+    ret = list(
+      par = obj$par,
+      value = obj$fval,
+      counts = c(`function` = NA, `gradient` = NA),
+      convergence = obj$ierr,
+      message = obj$msg,
+      hessian = numDeriv::hessian(mll, obj$par))
+    return(ret)
+  }
+  restructure_bobyqa_mll_quad = function(obj) {
+    ret = list(
+      par = obj$par,
+      value = obj$fval,
+      counts = c(`function` = NA, `gradient` = NA),
+      convergence = obj$ierr,
+      message = obj$msg,
+      hessian = numDeriv::hessian(mll_quad, obj$par))
+    return(ret)
+  }
+
   # optimisation routines
+  # fallback order: BFGS, nlm, bobyqa, Nelder-Mead
+
   o_an = tryCatch(optim(par = start, fn = mll, method = "BFGS", hessian = TRUE),
                   error = function(cond) {
-                    return(error_obj)
-                  })
+                    tryCatch(restructure_nlm(nlm(f = mll, p = start, hessian = TRUE)),
+                             error = function(cond2) {
+                               tryCatch(restructure_bobyqa_mll(bobyqa(par = start, fn = mll)),
+                                        error = function(cond3) {
+                                          tryCatch(optim(par = start, fn = mll, method = "Nelder-Mead", hessian = TRUE),
+                                                   error = function(cond4) {
+                                                     return(error_obj)
+                                                     })
+                                        })
+                             })
+                    })
   if (o_an$convergence != 0) {
     o_an$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
   } else {
@@ -166,7 +210,16 @@ sim_an_vs_gq <- function(seed, n_individuals, n_clusters, frailty_theta, treatme
 
   o_gq = tryCatch(optim(par = start, fn = mll_quad, method = "BFGS", hessian = TRUE),
                   error = function(cond) {
-                    return(error_obj)
+                    tryCatch(restructure_nlm(nlm(f = mll_quad, p = start, hessian = TRUE)),
+                             error = function(cond2) {
+                               tryCatch(restructure_bobyqa_mll_quad(bobyqa(par = start, fn = mll_quad)),
+                                        error = function(cond3) {
+                                          tryCatch(optim(par = start, fn = mll_quad, method = "Nelder-Mead", hessian = TRUE),
+                                                   error = function(cond4) {
+                                                     return(error_obj)
+                                                   })
+                                        })
+                             })
                   })
   if (o_gq$convergence != 0) {
     o_gq$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
@@ -199,7 +252,7 @@ sim_normal_gq <- function(seed, n_individuals, n_clusters, frailty_sigma, treatm
 
   if (ngh < 2) stop("number of knots 'ngh' needs to be >= 2")
   # generate data
-  # seed = 352486; n_individuals = 1000; n_clusters = 15; frailty_sigma = 1; treatment_effect = 0.5; lambda = 3; p = 1.5; ngh = 35
+  # seed = 352486; n_individuals = 100; n_clusters = 100; frailty_sigma = 1; treatment_effect = 0.5; lambda = 3; p = 1.5; ngh = 35
   df = gen_data_normal(seed = seed,
                        n_individuals = n_individuals,
                        n_clusters = n_clusters,
@@ -259,11 +312,43 @@ sim_normal_gq <- function(seed, n_individuals, n_clusters, frailty_sigma, treatm
     hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "sigma", "trt"), c("p", "lambda", "sigma", "trt")))
   )
 
-  # optimisation routines
-  o_gq = tryCatch(
-    optim(par = start, fn = mll, method = "BFGS", hessian = TRUE),
-    error = function(cond) return(error_obj))
+  # functions for converting objects from nlm and bobywa to optim's format
+  restructure_nlm = function(obj) {
+    ret = list(
+      par = obj$estimate,
+      value = obj$minimum,
+      counts = c(`function` = NA, `gradient` = NA),
+      convergence = ifelse(obj$code %in% c(1, 2), 0, obj$code),
+      message = NULL,
+      hessian = obj$hessian)
+    return(ret)
+  }
+  restructure_bobyqa = function(obj) {
+    ret = list(
+      par = obj$par,
+      value = obj$fval,
+      counts = c(`function` = NA, `gradient` = NA),
+      convergence = obj$ierr,
+      message = obj$mess,
+      hessian = numDeriv::hessian(mll, obj$par))
+    return(ret)
+  }
 
+  # optimisation routines
+  # fallback order: BFGS, nlm, bobyqa, Nelder-Mead
+  o_gq = tryCatch(optim(par = start, fn = mll, method = "BFGS", hessian = TRUE),
+                  error = function(cond) {
+                    tryCatch(restructure_nlm(nlm(f = mll, p = start, hessian = TRUE)),
+                             error = function(cond2) {
+                               tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll)),
+                                        error = function(cond3) {
+                                          tryCatch(optim(par = start, fn = mll, method = "Nelder-Mead", hessian = TRUE),
+                                                   error = function(cond4) {
+                                                     return(error_obj)
+                                                   })
+                                        })
+                             })
+                  })
   if (o_gq$convergence != 0) {
     o_gq$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
   } else {
