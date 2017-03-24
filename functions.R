@@ -49,7 +49,7 @@ gen_data_normal <- function(seed, n_individuals, n_clusters, frailty_sigma, trea
 # function for estimating a model with a (potentially shared) Gamma frailty term
 sim_an_vs_gq <- function(seed, n_individuals, n_clusters, frailty_theta, treatment_effect, lambda, p, ngl = 35) {
   # packages
-  # seed = 878765949; n_individuals = 1000; n_clusters = 15; frailty_theta = 0.25; treatment_effect = 0.0; lambda = 0.5; p = 1.0; ngl = 15
+  # seed = 69360916; n_individuals = 25; n_clusters = 200; frailty_theta = 0.25; treatment_effect = -0.5; lambda = 0.5; p = 1.0; ngl = 15
 
   if (!requireNamespace("pacman")) install.packages("pacman")
   pacman::p_load("pracma", "numDeriv", "minqa")
@@ -177,11 +177,11 @@ sim_an_vs_gq <- function(seed, n_individuals, n_clusters, frailty_theta, treatme
   }
 
   # optimisation routines
-  # fallback order: BFGS, nlm, bobyqa, Nelder-Mead
+  # fallback order: nlm, BFGS, bobyqa, Nelder-Mead
 
-  o_an = tryCatch(optim(par = start, fn = mll, method = "BFGS", hessian = TRUE),
+  o_an = tryCatch(restructure_nlm(nlm(f = mll, p = start, hessian = TRUE)),
                   error = function(cond) {
-                    tryCatch(restructure_nlm(nlm(f = mll, p = start, hessian = TRUE)),
+                    tryCatch(optim(par = start, fn = mll, method = "BFGS", hessian = TRUE),
                              error = function(cond2) {
                                tryCatch(restructure_bobyqa_mll(bobyqa(par = start, fn = mll)),
                                         error = function(cond3) {
@@ -208,9 +208,9 @@ sim_an_vs_gq <- function(seed, n_individuals, n_clusters, frailty_theta, treatme
     }
   }
 
-  o_gq = tryCatch(optim(par = start, fn = mll_quad, method = "BFGS", hessian = TRUE),
+  o_gq = tryCatch(restructure_nlm(nlm(f = mll_quad, p = start, hessian = TRUE)),
                   error = function(cond) {
-                    tryCatch(restructure_nlm(nlm(f = mll_quad, p = start, hessian = TRUE)),
+                    tryCatch(optim(par = start, fn = mll_quad, method = "BFGS", hessian = TRUE),
                              error = function(cond2) {
                                tryCatch(restructure_bobyqa_mll_quad(bobyqa(par = start, fn = mll_quad)),
                                         error = function(cond3) {
@@ -335,10 +335,10 @@ sim_normal_gq <- function(seed, n_individuals, n_clusters, frailty_sigma, treatm
   }
 
   # optimisation routines
-  # fallback order: BFGS, nlm, bobyqa, Nelder-Mead
-  o_gq = tryCatch(optim(par = start, fn = mll, method = "BFGS", hessian = TRUE),
+  # fallback order: nlm, BFGS, bobyqa, Nelder-Mead
+  o_gq = tryCatch(restructure_nlm(nlm(f = mll, p = start, hessian = TRUE)),
                   error = function(cond) {
-                    tryCatch(restructure_nlm(nlm(f = mll, p = start, hessian = TRUE)),
+                    tryCatch(optim(par = start, fn = mll, method = "BFGS", hessian = TRUE),
                              error = function(cond2) {
                                tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll)),
                                         error = function(cond3) {
