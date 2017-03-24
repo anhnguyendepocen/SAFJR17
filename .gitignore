@@ -3,5 +3,6 @@
 *.dta
 *.RDS
 *.html
+*.png
 .Rproj.user
 rsconnect/
