@@ -289,7 +289,7 @@ knitr::opts_chunk$set(tidy = TRUE, echo = FALSE, warning = FALSE, dpi = 300, fig
 # Loading packages and data:
 
 if (!requireNamespace("pacman")) install.packages("pacman")
-pacman::p_load("dplyr", "tidyr", "ggplot2", "ggthemes", "stringr")
+pacman::p_load("dplyr", "tidyr", "ggplot2", "ggthemes", "stringr", "readr", "pracma", "numDeriv", "fastGHQuad")
 s_an_vs_gq <- lapply(list.files(path = "Results/", pattern = "an_vs_gq", full.names = T), readRDS) %>% 
   bind_rows()
 s_normal_gq <- lapply(list.files(path = "Results/", pattern = "normal_gq", full.names = T), readRDS) %>% 
@@ -443,9 +443,9 @@ s_an_vs_gq_summary %>%
   separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
   mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
   filter(grepl("^convn", stat)) %>%
-  rename(`N. individuals` = n_individuals, `N. clusters` = n_clusters) %>% 
+  rename(`N. ind` = n_individuals, `N. clusters` = n_clusters) %>% 
   ggplot(aes(x = method, y = value)) +
-  facet_grid(`N. clusters` ~ `N. individuals` , labeller = label_both) +
+  facet_grid(`N. clusters` ~ `N. ind` , labeller = label_both) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
   scale_y_continuous(labels = scales::comma) +
@@ -541,6 +541,23 @@ s_an_vs_gq_summary %>%
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "N. of clusters", y = "P. of simulations converging", color = "")
 
+# By n_individuals x n_clusters
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convp", stat)) %>%
+  rename(`N. ind` = n_individuals, `N. clusters` = n_clusters) %>% 
+  ggplot(aes(x = method, y = value)) +
+  facet_grid(`N. clusters` ~ `N. ind` , labeller = label_both) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() + 
+  labs(x = "", y = "N. of simulations converging")
+
 # By treatment_effect:
 s_an_vs_gq_summary %>%
   gather(key = key, value = value, 8:75) %>%
@@ -633,6 +650,8 @@ s_an_vs_gq_summary %>%
 
 ### Bias
 
+Overall:
+
 ```{r}
 s_an_vs_gq_summary %>%
   gather(key = key, value = value, 8:75) %>%
@@ -643,7 +662,7 @@ s_an_vs_gq_summary %>%
   filter(grepl("^bias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
-  geom_jitter(height = 0) + 
+  geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
   scale_color_brewer(type = "qual", palette = "Set1") + 
   theme_bw() + 
@@ -651,7 +670,135 @@ s_an_vs_gq_summary %>%
   labs(x = "", y = "Bias", color = "")
 ```
 
+Bias by treatment effect:
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ treatment_effect) +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
+```
+
+Bias by frailty variance:
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ frailty_theta) +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
+```
+
+Bias by number of quadrature nodes:
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ ngl) +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
+```
+
+Bias by number of clusters:
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ n_clusters) +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
+```
+
+Bias by number of individuals:
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ n_individuals) +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
+```
+
+Bias by number of clusters and number of individuals:
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_grid(n_individuals ~ n_clusters) +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
+```
+
 ### Coverage probability
+
+Overall:
 
 ```{r}
 s_an_vs_gq_summary %>%
@@ -667,6 +814,138 @@ s_an_vs_gq_summary %>%
   geom_boxplot(alpha = 3/4) + 
   scale_color_brewer(type = "qual", palette = "Set1") + 
   scale_y_continuous(labels = scales::percent) + 
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
+```
+
+Coverage probability by treatment effect:
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_y_continuous(labels = scales::percent) + 
+  facet_wrap(~ treatment_effect) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
+```
+
+Coverage probability by frailty variance:
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_y_continuous(labels = scales::percent) + 
+  facet_wrap(~ frailty_theta) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
+```
+
+Coverage probability by quadrature nodes:
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_y_continuous(labels = scales::percent) + 
+  facet_wrap(~ ngl) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
+```
+
+Coverage probability by number of clusters:
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_y_continuous(labels = scales::percent) + 
+  facet_wrap(~ n_clusters) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
+```
+
+Coverage probability by number of individuals:
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_y_continuous(labels = scales::percent) + 
+  facet_wrap(~ n_individuals) +
+  theme_bw() + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
+```
+
+Coverage probability by number of clusters and number of individuals:
+
+```{r}
+s_an_vs_gq_summary %>%
+  gather(key = key, value = value, 8:75) %>%
+  mutate(method = str_sub(key, 1, 2),
+         par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_y_continuous(labels = scales::percent) + 
+  facet_grid(n_individuals ~ n_clusters) +
   theme_bw() + 
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "", y = "Coverage probability", color = "")
@@ -850,11 +1129,11 @@ s_normal_gq_summary %>%
   separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
   mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
   filter(grepl("^convn", stat)) %>%
-  rename(`N. individuals` = n_individuals, `N. clusters` = n_clusters) %>% 
+  rename(`N. ind` = n_individuals, `N. clusters` = n_clusters) %>% 
   ggplot(aes(x = 1, y = value)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  facet_grid(`N. clusters` ~ `N. individuals` , labeller = label_both) +
+  facet_grid(`N. clusters` ~ `N. ind` , labeller = label_both) +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
@@ -933,6 +1212,23 @@ s_normal_gq_summary %>%
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
   labs(x = "N. of clusters", y = "P. of simulations converging")
+
+# By n_individuals x n_clusters
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^convp", stat)) %>%
+  rename(`N. ind` = n_individuals, `N. clusters` = n_clusters) %>% 
+  ggplot(aes(x = 1, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  facet_grid(`N. clusters` ~ `N. ind` , labeller = label_both) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  labs(x = "", y = "N. of simulations converging")
 
 # By treatment_effect:
 s_normal_gq_summary %>%
@@ -1019,6 +1315,8 @@ s_normal_gq_summary %>%
 
 ### Bias
 
+Overall:
+
 ```{r}
 s_normal_gq_summary %>%
   gather(key = key, value = value, 8:41) %>%
@@ -1035,7 +1333,129 @@ s_normal_gq_summary %>%
   labs(x = "", y = "Bias")
 ```
 
+Bias by treatment effect:
+
+```{r}
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>%
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = name, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ treatment_effect) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Bias")
+```
+
+Bias by frailty variance:
+
+```{r}
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>%
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = name, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ frailty_sigma) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Bias")
+```
+
+Bias by number of quadrature nodes:
+
+```{r}
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>%
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = name, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ ngh) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Bias")
+```
+
+Bias by number of clusters:
+
+```{r}
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>%
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = name, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ n_clusters) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Bias")
+```
+
+Bias by number of individuals:
+
+```{r}
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>%
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = name, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ n_individuals) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Bias")
+```
+
+Bias by number of clusters and number of individuals:
+
+```{r}
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^bias", stat)) %>%
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = name, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_grid(n_individuals ~ n_clusters) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Bias")
+```
+
 ### Coverage probability
+
+Overall:
 
 ```{r}
 s_normal_gq_summary %>%
@@ -1051,6 +1471,132 @@ s_normal_gq_summary %>%
   scale_y_continuous(labels = scales::percent) + 
   scale_color_brewer(type = "qual", palette = "Set1") + 
   theme_bw() + 
+  labs(x = "", y = "Coverage probability")
+```
+
+Coverage probability by treatment effect:
+
+```{r}
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = name, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_y_continuous(labels = scales::percent) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ treatment_effect) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Coverage probability")
+```
+
+Coverage probability by frailty variance:
+
+```{r}
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = name, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_y_continuous(labels = scales::percent) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ frailty_sigma) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Coverage probability")
+```
+
+Coverage probability by number of quadrature nodes:
+
+```{r}
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = name, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_y_continuous(labels = scales::percent) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ ngh) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Coverage probability")
+```
+
+Coverage probability by number of clusters:
+
+```{r}
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = name, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_y_continuous(labels = scales::percent) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ n_clusters) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Coverage probability")
+```
+
+Coverage probability by number of individuals:
+
+```{r}
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = name, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_y_continuous(labels = scales::percent) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_wrap(~ n_individuals) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Coverage probability")
+```
+
+Coverage probability by number of clusters and number of individuals:
+
+```{r}
+s_normal_gq_summary %>%
+  gather(key = key, value = value, 8:41) %>%
+  mutate(par = str_sub(key, 4, str_length(key))) %>%
+  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+  filter(grepl("^covp", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = name, y = value)) +
+  geom_jitter(height = 0) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_y_continuous(labels = scales::percent) + 
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  facet_grid(n_individuals ~ n_clusters) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(x = "", y = "Coverage probability")
 ```
 
@@ -1134,6 +1680,130 @@ s_normal_gq_summary %>%
 
 ## Application to catheter data
 
+```{r}
+catheter <- read_csv("catheter.csv", col_types = "ddddd____")
+glimpse(catheter)
+```
 
+First, we estimate the effect of age and gender on the risk of infection using a Weibull survival model with a Gamma frailty.
+
+We will use the following starting values:
+
+```{r}
+sr <- survival::survreg(survival::Surv(time, infect) ~ age + female, dist = "weibull", data = catheter)
+start <- c(log(1 / sr$scale), # p
+           log(exp(sr$coef[1]) ^ (-1 / sr$scale)), # lambda
+           log(1), # theta
+           -sr$coef[2] * (1 / sr$scale), # beta1, coefficient of age, AFT --> PH
+           -sr$coef[3] * (1 / sr$scale)) # beta2, coefficient of female, AFT --> PH
+names(start) <- c("p", "lambda", "theta", "age", "female")
+start
+```
+
+Maximising the likelihood using analytical formulae:
+
+```{r}
+mll = function(pars) {
+  p = exp(pars[1])
+  lambda = exp(pars[2])
+  theta = exp(pars[3])
+  beta1 = pars[4]
+  beta2 = pars[5]
+  lli = vapply(1:max(catheter$patient),
+               FUN = function(i) {
+                 log_hi = log(p) + log(lambda) + (p - 1) * log(catheter$time[catheter$patient == i]) + catheter$age[catheter$patient == i] * beta1 + catheter$female[catheter$patient == i] * beta2 
+                 log_Si = -lambda * catheter$time[catheter$patient == i] ^ p * exp(catheter$age[catheter$patient == i] * beta1 + catheter$female[catheter$patient == i] * beta2)
+                 Di = sum(catheter$infect[catheter$patient == i])
+                 lli = sum(catheter$infect[catheter$patient == i] * (log_hi)) - (theta ^ (-1) + Di) * log(1 - theta * sum(log_Si)) + Di * log(theta) + lgamma(theta ^ (-1) + Di) - lgamma(1 / theta) + sum(log(catheter$time[catheter$patient == i]))
+                 return(lli)
+                 },
+               FUN.VALUE = numeric(1))
+  ll = sum(lli)
+  return(-ll)
+}
+out <- optim(fn = mll, par = start, method = "BFGS", hessian = TRUE)
+out$se <- sqrt(diag(solve(out$hessian)))
+out
+
+all_res <- data.frame(par = names(out$par), est = out$par, se = out$se, lower = out$par - qnorm(1 - 0.05 / 2) * out$se, upper = out$par + qnorm(1 - 0.05 / 2) * out$se, what = "AF")
+```
+
+Maximising the likelihood using Gauss-Laguerre quadrature with 15 nodes:
+
+```{r}
+gl_rule = gaussLaguerre(15)
+mll_quad = function(pars) {
+  p = exp(pars[1])
+  lambda = exp(pars[2])
+  theta = exp(pars[3])
+  beta1 = pars[4]
+  beta2 = pars[5]
+  lli = vapply(1:max(catheter$patient),
+               FUN = function(i) {
+                 log_hi = log(p) + log(lambda) + (p - 1) * log(catheter$time[catheter$patient == i]) + (catheter$age[catheter$patient == i] * beta1 + catheter$female[catheter$patient == i] * beta2)
+                 log_Si = -lambda * catheter$time[catheter$patient == i] ^ p * exp(catheter$age[catheter$patient == i] * beta1 + catheter$female[catheter$patient == i] * beta2)
+                 Di = sum(catheter$infect[catheter$patient == i])
+                 intgrdq = function(alpha) exp(alpha + Di * log(alpha) + alpha * sum(log_Si) + (1 / theta - 1) * log(alpha) - alpha / theta)
+                 vintgrdq = Vectorize(intgrdq)
+                 int = sum(gl_rule$w * vintgrdq(gl_rule$x))
+                 ll = sum(catheter$infect[catheter$patient == i] * (log_hi)) - lgamma(1 / theta) - (1 / theta) * log(theta) + log(int) + sum(log(catheter$time[catheter$patient == i]))
+                 return(ll)},
+               FUN.VALUE = numeric(1))
+  ll = sum(lli)
+  return(-ll)
+}
+out_quad <- optim(fn = mll_quad, par = start, method = "BFGS", hessian = TRUE)
+out_quad$se <- sqrt(diag(solve(out_quad$hessian)))
+out_quad
+
+all_res <- bind_rows(all_res,
+                     data.frame(par = names(out_quad$par), est = out_quad$par, se = out_quad$se, lower = out_quad$par - qnorm(1 - 0.05 / 2) * out_quad$se, upper = out_quad$par + qnorm(1 - 0.05 / 2) * out_quad$se, what = "GQ"))
+```
+
+Then, we assume a random effect (intercept). We use the same starting values, and we substitute 15-nodes Gauss-Laguerre quadrature for 15-nodes Gauss-Hermite quadrature:
+
+```{r}
+gh_rule = gaussHermiteData(35)
+
+mll_re = function(pars) {
+  p = exp(pars[1])
+  lambda = exp(pars[2])
+  sigma = exp(pars[3])
+  beta1 = pars[4]
+  beta2 = pars[5]
+  lli = vapply(1:max(catheter$patient),
+               FUN = function(i) {
+                 intgrd = function(bi) {
+                   log_hi = log(p) + log(lambda) + (p - 1) * log(catheter$time[catheter$patient == i]) + catheter$age[catheter$patient == i] * (beta1) + catheter$female[catheter$patient == i] * beta2 + bi
+                   log_Si = -lambda * catheter$time[catheter$patient == i] ^ p * exp(catheter$age[catheter$patient == i] * (beta1) + catheter$female[catheter$patient == i] * beta2 + bi)
+                   ret = exp(sum(catheter$infect[catheter$patient == i] * (log_hi)) + sum(log_Si))
+                   return(ret)}
+                 vintgrd = Vectorize(intgrd)
+                 int = sum(gh_rule$w / sqrt(pi) * vintgrd(gh_rule$x * sqrt(2) * sigma))
+                 ll = log(int) + sum(log(catheter$time[catheter$patient == i]))
+                 return(ll)},
+               FUN.VALUE = numeric(1))
+  ll = sum(lli)
+  return(-ll)
+}
+out_re <- optim(fn = mll_re, par = start, method = "BFGS", hessian = TRUE)
+out_re$se <- sqrt(diag(solve(out_re$hessian)))
+out_re
+
+all_res <- bind_rows(all_res,
+                     data.frame(par = names(out_re$par), est = out_re$par, se = out_re$se, lower = out_re$par - qnorm(1 - 0.05 / 2) * out_re$se, upper = out_re$par + qnorm(1 - 0.05 / 2) * out_re$se, what = "RE"))
+```
+
+Comparison of results from the different models:
+
+```{r}
+all_res %>% 
+  ggplot(aes(x = par, y = est, color = what)) + 
+  geom_point(position = position_dodge(0.5)) + 
+  geom_errorbar(aes(ymin = lower, ymax = upper), position = position_dodge(0.5), width = 0.25) +
+  scale_color_brewer(type = "qual", palette = "Set1") + 
+  theme_bw() + 
+  labs(x = "", y = "Estimate", color = "")
+```
 
 # References
