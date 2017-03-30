@@ -5,7 +5,6 @@ source("functions.R")
 library(foreach)
 library(doSNOW)
 library(parallel)
-library(dplyr)
 
 # define scenarios
 scenarios = expand.grid(
@@ -13,16 +12,16 @@ scenarios = expand.grid(
   n_clusters = c(15, 30, 100, 200),
   frailty_sigma = c(0.25, 0.50, 1.00),
   treatment_effect = c(-0.50, 0.00, 0.50),
-  ngh = c(15, 35, 75, 105),
   lambda = 3,
-  p = 1.5) %>%
-  filter((n_individuals %in% c(25, 50, 100) & n_clusters %in% c(100, 200)) | (n_individuals %in% c(100, 250, 500, 1000) & n_clusters %in% c(15, 30)))
+  p = 1.5)
+
+scenarios = scenarios[!(scenarios$n_individuals %in% c(500, 1000) & scenarios$n_clusters == 100) & !(scenarios$n_individuals %in% c(250, 500, 1000) & scenarios$n_clusters == 200),]
 
 # get parameter from array id
 TID = commandArgs(trailingOnly = T)
 
 # setup parallel cluster
-cl <- makeCluster(20, type = "SOCK")
+cl <- makeCluster(28, type = "SOCK")
 registerDoSNOW(cl)
 
 # generate seeds for the simulation
@@ -36,7 +35,6 @@ s = foreach(seeds = round(runif(1000, 0, 1e9)), .combine = rbind) %dopar% {
                      n_clusters = n_clusters,
                      frailty_sigma = frailty_sigma,
                      treatment_effect = treatment_effect,
-                     ngh = ngh,
                      lambda = lambda,
                      p = p))
 }

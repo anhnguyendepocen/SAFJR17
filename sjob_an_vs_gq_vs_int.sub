@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#PBS -o Output/out_an_vs_gq_vs_int.txt
+#PBS -e Error/err_an_vs_gq_vs_int.txt
+#PBS -N safjr17_sim_an_vs_gq_vs_int
+#PBS -l walltime=2:00:00
+#PBS -l pvmem=1gb
+#PBS -l nodes=1:ppn=20
+#PBS -m ea
+#PBS -t 1-171
+
+TID=$PBS_ARRAYID
+cd $PBS_O_WORKDIR
+module load R
+Rscript job_an_vs_gq_vs_int.R ${TID}
