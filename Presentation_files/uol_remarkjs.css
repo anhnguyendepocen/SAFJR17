@@ -45,18 +45,16 @@ h1, h2, h3 {
   font-size: 0.75em;
 }
 
-ul {
-  color: var(--colour-uol-red);
+.footnote-ts {
+  text-align: left;
+  position: absolute;
+  bottom: 0;
+  left: 5%;
+  font-size: 0.5em;
 }
 
-ol {
-  color: var(--colour-uol-red);
-  list-style-type: lower-roman;
-}
-
-li p, ul p, ol p {
+ul, ol {
   line-height: 1.5em;
-  color: var(--colour-black);
 }
 
 .red {
@@ -65,6 +63,10 @@ li p, ul p, ol p {
 
 .large {
   font-size: 2em;
+}
+
+.small {
+  font-size: 0.5em;
 }
 
 a, a > code {
@@ -206,7 +208,7 @@ code {
   font-size: 1em;
   margin-bottom: -10px;
   margin-right: 10px;
-  color: var(--colour-grey-light);
+  color: var(--colour-uol-grey);
 }
 
 .inverse .remark-slide-number {
