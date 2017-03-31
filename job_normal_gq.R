@@ -21,7 +21,7 @@ scenarios = scenarios[!(scenarios$n_individuals %in% c(500, 1000) & scenarios$n_
 TID = commandArgs(trailingOnly = T)
 
 # setup parallel cluster
-cl <- makeCluster(28, type = "SOCK")
+cl <- makeCluster(24, type = "SOCK")
 registerDoSNOW(cl)
 
 # generate seeds for the simulation

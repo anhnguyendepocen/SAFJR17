@@ -94,7 +94,7 @@ $$L_i = \int_{-\infty} ^ {+\infty} P(T_i, d_i | b_i; \theta_t) \left[ \prod_{j =
 
 Joint model likelihood: integral of survival submodel P(T_i, d_i) x mixed model P(y_i(t_ij)) x random effects distribution P(b_i).
 
-Examples: healthcare data with multiple, itermittently observed biomarkers, dynamic prediction models, ... 
+Examples: healthcare data with multiple, itermittently observed biomarkers, dynamic prediction models, accounting for measurement error, ... 
 
 ---
 # Estimation options
