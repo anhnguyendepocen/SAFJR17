@@ -48,7 +48,7 @@ gen_data_normal <- function(seed, n_individuals, n_clusters, frailty_sigma, trea
 
 # function for estimating a model with a (potentially shared) Gamma frailty term
 sim_an_vs_gq_vs_int <- function(seed, n_individuals, n_clusters, frailty_theta, treatment_effect, lambda, p) {
-  # seed = 72642075; n_individuals = 1000; n_clusters = 30; frailty_theta = 1; treatment_effect = 0; lambda = 0.5; p = 1
+  # seed = 265536720; n_individuals = 25; n_clusters = 15; frailty_theta = 0.25; treatment_effect = -0.5; lambda = 0.5; p = 1
   # packages
   if (!requireNamespace("pacman")) install.packages("pacman")
   pacman::p_load("numDeriv", "minqa", "pracma", "marqLevAlg")
@@ -247,54 +247,30 @@ sim_an_vs_gq_vs_int <- function(seed, n_individuals, n_clusters, frailty_theta, 
       se = c(p = NA, lambda = NA, theta = NA, trt = NA))
     return(ret)
   }
-  restructure_marqLevAlg = function(obj) {
-    id = 1:length(obj$b)
-    indice = rep(id * (id + 1) / 2)
-    se = sqrt(obj$v[indice])
-    names(se) = c("p", "lambda", "theta", "trt")
-    ret = list(
-      par = obj$b,
-      value = obj$fn.value,
-      counts = c(`function` = NA, `gradient` = NA),
-      convergence = ifelse(obj$istop == 1, 0, obj$istop),
-      message = NULL,
-      hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt"))),
-      se = se)
-    return(ret)
-  }
 
   # optimisation routines
-  # fallback order: nlm, BFGS, marqLevAlg, bobyqa, Nelder-Mead
+  # fallback order: nlm, BFGS, bobyqa, Nelder-Mead
   o_an = tryCatch(restructure_nlm(nlm(f = mll, p = start, hessian = TRUE)),
                   error = function(cond) {
                     tryCatch(optim(par = start, fn = mll, method = "BFGS", hessian = TRUE),
                              error = function(cond1) {
-                               tryCatch(restructure_marqLevAlg(marqLevAlg(b = start, fn = mll)),
+                               tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll), fun = mll),
                                         error = function(cond2) {
-                                          tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll), fun = mll),
+                                          tryCatch(optim(par = start, fn = mll, method = "Nelder-Mead", hessian = TRUE),
                                                    error = function(cond3) {
-                                                     tryCatch(optim(par = start, fn = mll, method = "Nelder-Mead", hessian = TRUE),
-                                                              error = function(cond4) {
-                                                                return(error_obj)
-                                                              })
-                                                   })
-                                        })
-                             })
-                  })
+                                                     return(error_obj)
+                                                     })
+                                          })
+                               })
+                    })
   if (o_an$convergence != 0) {
-    o_an$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
-  } else if (any(is.na(o_an$se))) {
+    o_an = error_obj
+  } else {
     o_an$se = tryCatch(sqrt(diag(solve(o_an$hessian))),
                        error = function(cond) {
                          return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
     if (any(is.na(o_an$se))) {
-      o_an$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
-      o_an$value = NA
-      o_an$counts = c(`function` = NA, `gradient` = NA)
-      o_an$convergence = -99
-      o_an$message = NULL
-      o_an$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
-      o_an$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_an = error_obj
     }
   }
 
@@ -302,32 +278,24 @@ sim_an_vs_gq_vs_int <- function(seed, n_individuals, n_clusters, frailty_theta, 
                      error = function(cond) {
                        tryCatch(optim(par = start, fn = mll_quad_15, method = "BFGS", hessian = TRUE),
                                 error = function(cond1) {
-                                  tryCatch(restructure_marqLevAlg(marqLevAlg(b = start, fn = mll_quad_15)),
+                                  tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_quad_15), fun = mll_quad_15),
                                            error = function(cond2) {
-                                             tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_quad_15), fun = mll_quad_15),
+                                             tryCatch(optim(par = start, fn = mll_quad_15, method = "Nelder-Mead", hessian = TRUE),
                                                       error = function(cond3) {
-                                                        tryCatch(optim(par = start, fn = mll_quad_15, method = "Nelder-Mead", hessian = TRUE),
-                                                                 error = function(cond4) {
-                                                                   return(error_obj)
-                                                                 })
-                                                      })
-                                           })
-                                })
-                     })
+                                                        return(error_obj)
+                                                        })
+                                             })
+                                  })
+                       })
+
   if (o_gq_15$convergence != 0) {
-    o_gq_15$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
-  } else if (any(is.na(o_gq_15$se))) {
+    o_gq_15 = error_obj
+  } else {
     o_gq_15$se = tryCatch(sqrt(diag(solve(o_gq_15$hessian))),
                           error = function(cond) {
                             return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
     if (any(is.na(o_gq_15$se))) {
-      o_gq_15$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
-      o_gq_15$value = NA
-      o_gq_15$counts = c(`function` = NA, `gradient` = NA)
-      o_gq_15$convergence = -99
-      o_gq_15$message = NULL
-      o_gq_15$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
-      o_gq_15$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_gq_15 = error_obj
     }
   }
 
@@ -335,32 +303,23 @@ sim_an_vs_gq_vs_int <- function(seed, n_individuals, n_clusters, frailty_theta, 
                      error = function(cond) {
                        tryCatch(optim(par = start, fn = mll_quad_35, method = "BFGS", hessian = TRUE),
                                 error = function(cond1) {
-                                  tryCatch(restructure_marqLevAlg(marqLevAlg(b = start, fn = mll_quad_35)),
+                                  tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_quad_35), fun = mll_quad_35),
                                            error = function(cond2) {
-                                             tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_quad_35), fun = mll_quad_35),
+                                             tryCatch(optim(par = start, fn = mll_quad_35, method = "Nelder-Mead", hessian = TRUE),
                                                       error = function(cond3) {
-                                                        tryCatch(optim(par = start, fn = mll_quad_35, method = "Nelder-Mead", hessian = TRUE),
-                                                                 error = function(cond4) {
-                                                                   return(error_obj)
-                                                                 })
-                                                      })
-                                           })
-                                })
-                     })
+                                                        return(error_obj)
+                                                        })
+                                             })
+                                  })
+                       })
   if (o_gq_35$convergence != 0) {
-    o_gq_35$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
-  } else if (any(is.na(o_gq_35$se))) {
+    o_gq_35 = error_obj
+  } else  {
     o_gq_35$se = tryCatch(sqrt(diag(solve(o_gq_35$hessian))),
                           error = function(cond) {
                             return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
     if (any(is.na(o_gq_35$se))) {
-      o_gq_35$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
-      o_gq_35$value = NA
-      o_gq_35$counts = c(`function` = NA, `gradient` = NA)
-      o_gq_35$convergence = -99
-      o_gq_35$message = NULL
-      o_gq_35$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
-      o_gq_35$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_gq_35 = error_obj
     }
   }
 
@@ -368,32 +327,23 @@ sim_an_vs_gq_vs_int <- function(seed, n_individuals, n_clusters, frailty_theta, 
                      error = function(cond) {
                        tryCatch(optim(par = start, fn = mll_quad_75, method = "BFGS", hessian = TRUE),
                                 error = function(cond1) {
-                                  tryCatch(restructure_marqLevAlg(marqLevAlg(b = start, fn = mll_quad_75)),
+                                  tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_quad_75), fun = mll_quad_75),
                                            error = function(cond2) {
-                                             tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_quad_75), fun = mll_quad_75),
+                                             tryCatch(optim(par = start, fn = mll_quad_75, method = "Nelder-Mead", hessian = TRUE),
                                                       error = function(cond3) {
-                                                        tryCatch(optim(par = start, fn = mll_quad_75, method = "Nelder-Mead", hessian = TRUE),
-                                                                 error = function(cond4) {
-                                                                   return(error_obj)
-                                                                 })
-                                                      })
-                                           })
-                                })
-                     })
+                                                        return(error_obj)
+                                                        })
+                                             })
+                                  })
+                       })
   if (o_gq_75$convergence != 0) {
-    o_gq_75$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
-  } else if (any(is.na(o_gq_75$se))) {
+    o_gq_75 = error_obj
+  } else {
     o_gq_75$se = tryCatch(sqrt(diag(solve(o_gq_75$hessian))),
                           error = function(cond) {
                             return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
     if (any(is.na(o_gq_75$se))) {
-      o_gq_75$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
-      o_gq_75$value = NA
-      o_gq_75$counts = c(`function` = NA, `gradient` = NA)
-      o_gq_75$convergence = -99
-      o_gq_75$message = NULL
-      o_gq_75$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
-      o_gq_75$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_gq_75 = error_obj
     }
   }
 
@@ -401,32 +351,23 @@ sim_an_vs_gq_vs_int <- function(seed, n_individuals, n_clusters, frailty_theta, 
                      error = function(cond) {
                        tryCatch(optim(par = start, fn = mll_quad_105, method = "BFGS", hessian = TRUE),
                                 error = function(cond1) {
-                                  tryCatch(restructure_marqLevAlg(marqLevAlg(b = start, fn = mll_quad_105)),
+                                  tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_quad_105), fun = mll_quad_105),
                                            error = function(cond2) {
-                                             tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_quad_105), fun = mll_quad_105),
+                                             tryCatch(optim(par = start, fn = mll_quad_105, method = "Nelder-Mead", hessian = TRUE),
                                                       error = function(cond3) {
-                                                        tryCatch(optim(par = start, fn = mll_quad_105, method = "Nelder-Mead", hessian = TRUE),
-                                                                 error = function(cond4) {
-                                                                   return(error_obj)
-                                                                 })
-                                                      })
-                                           })
-                                })
-                     })
+                                                        return(error_obj)
+                                                        })
+                                             })
+                                  })
+                       })
   if (o_gq_105$convergence != 0) {
-    o_gq_105$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
-  } else if (any(is.na(o_gq_105$se))) {
+    o_gq_105 = error_obj
+  } else {
     o_gq_105$se = tryCatch(sqrt(diag(solve(o_gq_105$hessian))),
                           error = function(cond) {
                             return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
     if (any(is.na(o_gq_105$se))) {
-      o_gq_105$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
-      o_gq_105$value = NA
-      o_gq_105$counts = c(`function` = NA, `gradient` = NA)
-      o_gq_105$convergence = -99
-      o_gq_105$message = NULL
-      o_gq_105$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
-      o_gq_105$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_gq_105 = error_obj
     }
   }
 
@@ -434,32 +375,23 @@ sim_an_vs_gq_vs_int <- function(seed, n_individuals, n_clusters, frailty_theta, 
                    error = function(cond) {
                      tryCatch(optim(par = start, fn = mll_int, method = "BFGS", hessian = TRUE),
                               error = function(cond1) {
-                                tryCatch(restructure_marqLevAlg(marqLevAlg(b = start, fn = mll_int)),
+                                tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_int), fun = mll_int),
                                          error = function(cond2) {
-                                           tryCatch(restructure_bobyqa_mll_int(bobyqa(par = start, fn = mll_int)),
+                                           tryCatch(optim(par = start, fn = mll_int, method = "Nelder-Mead", hessian = TRUE),
                                                     error = function(cond3) {
-                                                      tryCatch(optim(par = start, fn = mll_int, method = "Nelder-Mead", hessian = TRUE),
-                                                               error = function(cond4) {
-                                                                 return(error_obj)
-                                                               })
-                                                    })
-                                         })
-                              })
-                   })
+                                                      return(error_obj)
+                                                      })
+                                           })
+                                })
+                     })
   if (o_int$convergence != 0) {
-    o_int$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
-  } else if (any(is.na(o_int$se))) {
+    o_int = error_obj
+  } else {
     o_int$se = tryCatch(sqrt(diag(solve(o_int$hessian))),
-                        error = function(cond) {
-                          return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
+                           error = function(cond) {
+                             return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
     if (any(is.na(o_int$se))) {
-      o_int$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
-      o_int$value = NA
-      o_int$counts = c(`function` = NA, `gradient` = NA)
-      o_int$convergence = -99
-      o_int$message = NULL
-      o_int$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
-      o_int$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_int = error_obj
     }
   }
 
@@ -646,54 +578,30 @@ sim_normal_gq <- function(seed, n_individuals, n_clusters, frailty_sigma, treatm
       se = c(p = NA, lambda = NA, theta = NA, trt = NA))
     return(ret)
   }
-  restructure_marqLevAlg = function(obj) {
-    id = 1:length(obj$b)
-    indice = rep(id * (id + 1) / 2)
-    se = sqrt(obj$v[indice])
-    names(se) = c("p", "lambda", "theta", "trt")
-    ret = list(
-      par = obj$b,
-      value = obj$fn.value,
-      counts = c(`function` = NA, `gradient` = NA),
-      convergence = ifelse(obj$istop == 1, 0, obj$istop),
-      message = NULL,
-      hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt"))),
-      se = se)
-    return(ret)
-  }
 
   # optimisation routines
-  # fallback order: nlm, BFGS, marqLevAlg, bobyqa, Nelder-Mead
+  # fallback order: nlm, BFGS, bobyqa, Nelder-Mead
   o_gq_15 = tryCatch(restructure_nlm(nlm(f = mll_15, p = start, hessian = TRUE)),
                      error = function(cond) {
                        tryCatch(optim(par = start, fn = mll_15, method = "BFGS", hessian = TRUE),
                                 error = function(cond1) {
-                                  tryCatch(restructure_marqLevAlg(marqLevAlg(b = start, fn = mll_15)),
+                                  tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_15), fun = mll_15),
                                            error = function(cond2) {
-                                             tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_15), fun = mll_15),
+                                             tryCatch(optim(par = start, fn = mll_15, method = "Nelder-Mead", hessian = TRUE),
                                                       error = function(cond3) {
-                                                        tryCatch(optim(par = start, fn = mll_15, method = "Nelder-Mead", hessian = TRUE),
-                                                                 error = function(cond4) {
-                                                                   return(error_obj)
-                                                                 })
-                                                      })
-                                           })
-                                })
-                     })
+                                                        return(error_obj)
+                                                        })
+                                             })
+                                  })
+                       })
   if (o_gq_15$convergence != 0) {
-    o_gq_15$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
-  } else if (any(is.na(o_gq_15$se))) {
+    o_gq_15 = error_obj
+  } else {
     o_gq_15$se = tryCatch(sqrt(diag(solve(o_gq_15$hessian))),
                           error = function(cond) {
                             return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
     if (any(is.na(o_gq_15$se))) {
-      o_gq_15$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
-      o_gq_15$value = NA
-      o_gq_15$counts = c(`function` = NA, `gradient` = NA)
-      o_gq_15$convergence = -99
-      o_gq_15$message = NULL
-      o_gq_15$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
-      o_gq_15$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_gq_15 = error_obj
     }
   }
 
@@ -701,32 +609,23 @@ sim_normal_gq <- function(seed, n_individuals, n_clusters, frailty_sigma, treatm
                      error = function(cond) {
                        tryCatch(optim(par = start, fn = mll_35, method = "BFGS", hessian = TRUE),
                                 error = function(cond1) {
-                                  tryCatch(restructure_marqLevAlg(marqLevAlg(b = start, fn = mll_35)),
+                                  tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_35), fun = mll_35),
                                            error = function(cond2) {
-                                             tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_35), fun = mll_35),
+                                             tryCatch(optim(par = start, fn = mll_35, method = "Nelder-Mead", hessian = TRUE),
                                                       error = function(cond3) {
-                                                        tryCatch(optim(par = start, fn = mll_35, method = "Nelder-Mead", hessian = TRUE),
-                                                                 error = function(cond4) {
-                                                                   return(error_obj)
-                                                                 })
-                                                      })
-                                           })
-                                })
-                     })
+                                                        return(error_obj)
+                                                        })
+                                             })
+                                  })
+                       })
   if (o_gq_35$convergence != 0) {
-    o_gq_35$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
-  } else if (any(is.na(o_gq_35$se))) {
+    o_gq_35 = error_obj
+  } else {
     o_gq_35$se = tryCatch(sqrt(diag(solve(o_gq_35$hessian))),
                           error = function(cond) {
                             return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
     if (any(is.na(o_gq_35$se))) {
-      o_gq_35$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
-      o_gq_35$value = NA
-      o_gq_35$counts = c(`function` = NA, `gradient` = NA)
-      o_gq_35$convergence = -99
-      o_gq_35$message = NULL
-      o_gq_35$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
-      o_gq_35$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_gq_35 = error_obj
     }
   }
 
@@ -734,32 +633,23 @@ sim_normal_gq <- function(seed, n_individuals, n_clusters, frailty_sigma, treatm
                      error = function(cond) {
                        tryCatch(optim(par = start, fn = mll_75, method = "BFGS", hessian = TRUE),
                                 error = function(cond1) {
-                                  tryCatch(restructure_marqLevAlg(marqLevAlg(b = start, fn = mll_75)),
+                                  tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_75), fun = mll_75),
                                            error = function(cond2) {
-                                             tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_75), fun = mll_75),
+                                             tryCatch(optim(par = start, fn = mll_75, method = "Nelder-Mead", hessian = TRUE),
                                                       error = function(cond3) {
-                                                        tryCatch(optim(par = start, fn = mll_75, method = "Nelder-Mead", hessian = TRUE),
-                                                                 error = function(cond4) {
-                                                                   return(error_obj)
-                                                                 })
-                                                      })
-                                           })
-                                })
-                     })
+                                                        return(error_obj)
+                                                        })
+                                             })
+                                  })
+                       })
   if (o_gq_75$convergence != 0) {
-    o_gq_75$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
-  } else if (any(is.na(o_gq_75$se))) {
+    o_gq_75 = error_obj
+  } else {
     o_gq_75$se = tryCatch(sqrt(diag(solve(o_gq_75$hessian))),
                           error = function(cond) {
                             return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
     if (any(is.na(o_gq_75$se))) {
-      o_gq_75$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
-      o_gq_75$value = NA
-      o_gq_75$counts = c(`function` = NA, `gradient` = NA)
-      o_gq_75$convergence = -99
-      o_gq_75$message = NULL
-      o_gq_75$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
-      o_gq_75$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_gq_75 = error_obj
     }
   }
 
@@ -767,32 +657,23 @@ sim_normal_gq <- function(seed, n_individuals, n_clusters, frailty_sigma, treatm
                      error = function(cond) {
                        tryCatch(optim(par = start, fn = mll_105, method = "BFGS", hessian = TRUE),
                                 error = function(cond1) {
-                                  tryCatch(restructure_marqLevAlg(marqLevAlg(b = start, fn = mll_105)),
+                                  tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_105), fun = mll_105),
                                            error = function(cond2) {
-                                             tryCatch(restructure_bobyqa(bobyqa(par = start, fn = mll_105), fun = mll_105),
+                                             tryCatch(optim(par = start, fn = mll_105, method = "Nelder-Mead", hessian = TRUE),
                                                       error = function(cond3) {
-                                                        tryCatch(optim(par = start, fn = mll_105, method = "Nelder-Mead", hessian = TRUE),
-                                                                 error = function(cond4) {
-                                                                   return(error_obj)
-                                                                 })
-                                                      })
-                                           })
-                                })
-                     })
+                                                        return(error_obj)
+                                                        })
+                                             })
+                                  })
+                       })
   if (o_gq_105$convergence != 0) {
-    o_gq_105$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
-  } else if (any(is.na(o_gq_105$se))) {
+    o_gq_105 = error_obj
+  } else {
     o_gq_105$se = tryCatch(sqrt(diag(solve(o_gq_105$hessian))),
                           error = function(cond) {
                             return(c(p = NA, lambda = NA, theta = NA, trt = NA))})
     if (any(is.na(o_gq_105$se))) {
-      o_gq_105$par = c(p = NA, lambda = NA, theta = NA, trt = NA)
-      o_gq_105$value = NA
-      o_gq_105$counts = c(`function` = NA, `gradient` = NA)
-      o_gq_105$convergence = -99
-      o_gq_105$message = NULL
-      o_gq_105$hessian = matrix(NA, nrow = 4, ncol = 4, dimnames = list(c("p", "lambda", "theta", "trt"), c("p", "lambda", "theta", "trt")))
-      o_gq_105$se = c(p = NA, lambda = NA, theta = NA, trt = NA)
+      o_gq_105 = error_obj
     }
   }
 
