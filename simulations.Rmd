@@ -1,13 +1,12 @@
 ---
 title: Simulations
-author: "Alessandro Gasparini"
+author: "AG"
 date: '`r Sys.Date()`'
 output: 
   html_document:
     toc: true
-    df_print: paged
-    rows.print: 20
-    theme: readable
+    toc_float: true
+    theme: paper
 classoption: a4paper, oneside
 documentclass: article
 fontsize: 11pt
@@ -23,29 +22,25 @@ We want to show that Gaussian quadrature performs well even in situations where 
 
 ## Simulation 1: analytical formulae against Gaussian quadrature
 
-We run \(1000\) simulations under different scenarios, assuming a Weibull baseline hazard with shape parameter \(p = 1\) and scale parameter \(\lambda = 0.5\). We generate survival times \(s\) using the approach of Bender _et al_.[@bender_2005]; we generate censoring time \(c\) using the same approach, but without including covariates in the calculation. Then, the observed time will be defined as \(t = \text{min}(s, c)\) and the event indicator variable as \(d = I(s \le c)\).
+We run 1000 simulations under different scenarios, assuming a Weibull baseline hazard with shape parameter \(p\) = 1 and scale parameter \(\lambda\) = 0.5. We generate survival times \(s\) using the approach of Bender _et al_.[@bender_2005]; we generate censoring time \(c\) using the same approach, but without including covariates in the calculation. Then, the observed time will be defined as \(t = \text{min}(s, c)\) and the event indicator variable as \(d = I(s \le c)\).
 
-We compare the use of analytical formulae against Gaussian quadrature varying:
+We compare the use of analytical formulae against Gaussian quadrature with varying number of nodes (15, 35, 75, 105) under the the following scenarios:
 
-1- combinations of number of individuals per cluster (\(25\), \(50\), \(100\), \(500\), \(1000\)) and number of clusters (\(15\), \(30\), \(100\), \(200\));
+1- combinations of number of individuals per cluster (25, 50, 100, 500, 1000) and number of clusters (25, 50, 100, 200);
 
-2- treatment effect: positive \(0.5\), negative \(-0.5\), null \(0.0\);
+2- treatment effect: positive 0.5, negative -0.5, null 0.0;
 
-3- variance of the frailty term: small \(0.25\), medium \(0.50\), large \(1.00\);
-
-4- number of quadrature nodes: \(15\), \(35\), \(75\), \(105\).
+3- variance of the frailty term: small 0.25, medium 0.50, large 1.00.
 
 ## Simulation 2: log-normal frailty
 
-We run \(1000\) simulations under different scenarios, assuming a Weibull baseline hazard with shape parameter \(p = 1.5\) and scale parameter \(\lambda = 3.0\). We generate survival times as in simulation n. \(1\), varying:
+We run 1000 simulations under different scenarios, assuming a Weibull baseline hazard with shape parameter \(p\) = 1.5 and scale parameter \(\lambda\) = 3.0. We generate survival times as in simulation n. 1, varying:
 
-1- combinations of number of individuals per cluster (\(25\), \(50\), \(100\), \(500\), \(1000\)) and number of clusters (\(15\), \(30\), \(100\), \(200\));
+1- combinations of number of individuals per cluster (25, 50, 100, 500, 1000) and number of clusters (25, 50, 100, 200);
 
-2- treatment effect: positive \(0.5\), negative \(-0.5\), null \(0.0\);
+2- treatment effect: positive 0.5, negative -0.5, null 0.0;
 
-3- variance of the frailty term: small \(0.25\), medium \(0.50\), large \(1.00\);
-
-4- number of quadrature nodes: \(15\), \(35\), \(75\), \(105\).
+3- variance of the frailty term: small 0.25, medium 0.50, large 1.00.
 
 ## Reporting
 
@@ -57,7 +52,7 @@ We report on:
 
 3- empirical SE \(\sqrt{\left[ 1 / (B - 1) \right] \sum_{i = 1} ^ B (\hat{\beta}_i - \bar{\hat{\beta}}) ^ 2}\);
 
-4- bias \(\delta = \bar{\hat{\beta}} - \beta\);
+4- bias \(\delta = \bar{\hat{\beta}} - \beta\), and percentage bias \(\frac{\bar{\hat{\beta}} - \beta} {\beta} \times 100\);
 
 5- mean square error \((\bar{\hat{\beta}} - \beta) ^ 2 + \text{SE}(\hat{\beta}) ^ 2\);
 
@@ -239,8 +234,8 @@ In the context of parametric survival models with frailty terms, the term we wou
 \[
 \begin{aligned}
 L_i &= \int_0 ^ {+ \infty} L_i(\alpha_i) g(\alpha_i) \ d \alpha_i \\
-    &= \int_0 ^ {+ \infty} \alpha_i ^ {D_i} \prod_{j = 1} ^ {n_i} \left[ S_{ij}(t_{ij}) ^ {\alpha_i} h_{ij}(t_{ij}) ^ {d_{ij}} \right] \frac{\alpha ^ {1 / \theta - 1} \exp(- \alpha / \theta)}{\Gamma(1 / \theta) \theta ^ {1 / \theta}} \ d \alpha_i = \\
-    &= \int_0 ^ {+ \infty} \alpha_i ^ {D_i} \prod_{j = 1} ^ {n_i} \left[ \left( \exp \left( -t_{ij} ^ p \exp \left( p \lambda t_{ij} ^ {p - 1} \exp \left( X_{ij} \beta \right) \right) \right) \right) ^ {\alpha_i} \left( p \lambda t_{ij} ^ {p - 1} \exp \left( X_{ij} \beta \right) \right) ^ {d_{ij}} \right] \times \\
+    &= \int_0 ^ {+ \infty} \alpha_i ^ {D_i} \prod_{j = 1} ^ {n_i} \left[ S_{ij}(t_{ij}) ^ {\alpha_i} h_{ij}(t_{ij}) ^ {d_{ij}} \right] \frac{\alpha_i ^ {1 / \theta - 1} \exp(- \alpha_i / \theta)}{\Gamma(1 / \theta) \theta ^ {1 / \theta}} \ d \alpha_i = \\
+    &= \int_0 ^ {+ \infty} \alpha_i ^ {D_i} \prod_{j = 1} ^ {n_i} \left[ \left( \exp \left( -t_{ij} ^ p \exp \left( X_{ij} \beta \right) \right) \right) ^ {\alpha_i} \left( p \lambda t_{ij} ^ {p - 1} \exp \left( X_{ij} \beta \right) \right) ^ {d_{ij}} \right] \times \\
     & \qquad \times \frac{\alpha_i ^ {1 / \theta - 1} \exp(- \alpha_i / \theta)}{\Gamma(1 / \theta) \theta ^ {1 / \theta}} \ d \alpha_i
 \end{aligned}
 \]
@@ -282,15 +277,17 @@ L_i &= \int_{-\infty}^{+\infty} \left[ \prod_{j = 1} ^ {n_i} h_{ij}(t_{ij}) ^ {d
 # Results
 
 ```{r, include = FALSE}
+rm(list = ls()); gc()
+
 # Setting knitr options:
 if (!requireNamespace("knitr")) install.packages("knitr")
-knitr::opts_chunk$set(tidy = TRUE, echo = FALSE, warning = FALSE, dpi = 300, fig.retina = 2)
+knitr::opts_chunk$set(tidy = TRUE, echo = FALSE, warning = FALSE, fig.width = 8, fig.height = 8)
 
 # Loading packages and data:
 
 if (!requireNamespace("pacman")) install.packages("pacman")
-pacman::p_load("dplyr", "tidyr", "ggplot2", "ggthemes", "stringr", "readr", "pracma", "numDeriv", "fastGHQuad")
-s_an_vs_gq <- lapply(list.files(path = "Results/", pattern = "an_vs_gq", full.names = T), readRDS) %>% 
+pacman::p_load("dplyr", "tidyr", "ggplot2", "ggthemes", "stringr", "readr", "pracma", "numDeriv", "fastGHQuad", "marqLevAlg")
+s_an_vs_gq_vs_int <- lapply(list.files(path = "Results/", pattern = "an_vs_gq_vs_int", full.names = T), readRDS) %>% 
   bind_rows()
 s_normal_gq <- lapply(list.files(path = "Results/", pattern = "normal_gq", full.names = T), readRDS) %>% 
   bind_rows()
@@ -298,103 +295,320 @@ s_normal_gq <- lapply(list.files(path = "Results/", pattern = "normal_gq", full.
 
 ## Analytical formulae against Gaussian quadrature
 
+Additionally, we include as a comparison the `integrate()` function from base-R. The `integrate()` function does, _for a finite interval, globally adaptive interval subdivision [...] in connection with extrapolation by Wynn's Epsilon algorithm, with the basic step being Gauss–Kronrod quadrature_. We compare that function with Gauss-Laguerre quadrature and analytical formulae.
+
 ```{r}
-# Process the results and compute statistics of interest:
-s_an_vs_gq_summary <- s_an_vs_gq %>% 
+s_an_vs_gq_vs_int_summary <- s_an_vs_gq_vs_int %>% 
   mutate(AF_trt_bias = AF_trt - treatment_effect,
-         GQ_trt_bias = GQ_trt - treatment_effect,
+         GQ15_trt_bias = GQ15_trt - treatment_effect,
+         GQ35_trt_bias = GQ35_trt - treatment_effect,
+         GQ75_trt_bias = GQ75_trt - treatment_effect,
+         GQ105_trt_bias = GQ105_trt - treatment_effect,
+         IN_trt_bias = IN_trt - treatment_effect,
          AF_theta_bias = AF_theta - log(frailty_theta),
-         GQ_theta_bias = GQ_theta - log(frailty_theta),
+         GQ15_theta_bias = GQ15_theta - log(frailty_theta),
+         GQ35_theta_bias = GQ35_theta - log(frailty_theta),
+         GQ75_theta_bias = GQ75_theta - log(frailty_theta),
+         GQ105_theta_bias = GQ105_theta - log(frailty_theta),
+         IN_theta_bias = IN_theta - log(frailty_theta),
          AF_lambda_bias = AF_lambda - log(lambda),
-         GQ_lambda_bias = GQ_lambda - log(lambda),
+         GQ15_lambda_bias = GQ15_lambda - log(lambda),
+         GQ35_lambda_bias = GQ35_lambda - log(lambda),
+         GQ75_lambda_bias = GQ75_lambda - log(lambda),
+         GQ105_lambda_bias = GQ105_lambda - log(lambda),
+         IN_lambda_bias = IN_lambda - log(lambda),
          AF_p_bias = AF_p - log(p),
-         GQ_p_bias = GQ_p - log(p),
+         GQ15_p_bias = GQ15_p - log(p),
+         GQ35_p_bias = GQ35_p - log(p),
+         GQ75_p_bias = GQ75_p - log(p),
+         GQ105_p_bias = GQ105_p - log(p),
+         IN_p_bias = IN_p - log(p),
+         AF_trt_pbias = (exp(AF_trt) - exp(treatment_effect)) / exp(treatment_effect),
+         GQ15_trt_pbias = (exp(GQ15_trt) - exp(treatment_effect)) / exp(treatment_effect),
+         GQ35_trt_pbias = (exp(GQ35_trt) - exp(treatment_effect)) / exp(treatment_effect),
+         GQ75_trt_pbias = (exp(GQ75_trt) - exp(treatment_effect)) / exp(treatment_effect),
+         GQ105_trt_pbias = (exp(GQ105_trt) - exp(treatment_effect)) / exp(treatment_effect),
+         IN_trt_pbias = (exp(IN_trt) - exp(treatment_effect)) / exp(treatment_effect),
+         AF_theta_pbias = (exp(AF_theta) - frailty_theta) / frailty_theta,
+         GQ15_theta_pbias = (exp(GQ15_theta) - frailty_theta) / frailty_theta,
+         GQ35_theta_pbias = (exp(GQ35_theta) - frailty_theta) / frailty_theta,
+         GQ75_theta_pbias = (exp(GQ75_theta) - frailty_theta) / frailty_theta,
+         GQ105_theta_pbias = (exp(GQ105_theta) - frailty_theta) / frailty_theta,
+         IN_theta_pbias = (exp(IN_theta) - frailty_theta) / frailty_theta,
+         AF_lambda_pbias = (exp(AF_lambda) - lambda) / lambda,
+         GQ15_lambda_pbias = (exp(GQ15_lambda) - lambda) / lambda,
+         GQ35_lambda_pbias = (exp(GQ35_lambda) - lambda) / lambda,
+         GQ75_lambda_pbias = (exp(GQ75_lambda) - lambda) / lambda,
+         GQ105_lambda_pbias = (exp(GQ105_lambda) - lambda) / lambda,
+         IN_lambda_pbias = (exp(IN_lambda) - lambda) / lambda,
+         AF_p_pbias = (exp(AF_p) - p) / p,
+         GQ15_p_pbias = (exp(GQ15_p) - p) / p,
+         GQ35_p_pbias = (exp(GQ35_p) - p) / p,
+         GQ75_p_pbias = (exp(GQ75_p) - p) / p,
+         GQ105_p_pbias = (exp(GQ105_p) - p) / p,
+         IN_p_pbias = (exp(IN_p) - p) / p,
          AF_trt_covp = ifelse(treatment_effect >= (AF_trt - AF_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (AF_trt + AF_trt_se * qnorm(1 - 0.05/2)), 1, 0),
-         GQ_trt_covp = ifelse(treatment_effect >= (GQ_trt - GQ_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (GQ_trt + GQ_trt_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ15_trt_covp = ifelse(treatment_effect >= (GQ15_trt - GQ15_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (GQ15_trt + GQ15_trt_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ35_trt_covp = ifelse(treatment_effect >= (GQ35_trt - GQ35_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (GQ35_trt + GQ35_trt_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ75_trt_covp = ifelse(treatment_effect >= (GQ75_trt - GQ75_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (GQ75_trt + GQ75_trt_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ105_trt_covp = ifelse(treatment_effect >= (GQ105_trt - GQ105_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (GQ105_trt + GQ105_trt_se * qnorm(1 - 0.05/2)), 1, 0),
+         IN_trt_covp = ifelse(treatment_effect >= (IN_trt - IN_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (IN_trt + IN_trt_se * qnorm(1 - 0.05/2)), 1, 0),
          AF_theta_covp = ifelse(log(frailty_theta) >= (AF_theta - AF_theta_se * qnorm(1 - 0.05/2)) & log(frailty_theta) <= (AF_theta + AF_theta_se * qnorm(1 - 0.05/2)), 1, 0),
-         GQ_theta_covp = ifelse(log(frailty_theta) >= (GQ_theta - GQ_theta_se * qnorm(1 - 0.05/2)) & log(frailty_theta) <= (GQ_theta + GQ_theta_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ15_theta_covp = ifelse(log(frailty_theta) >= (GQ15_theta - GQ15_theta_se * qnorm(1 - 0.05/2)) & log(frailty_theta) <= (GQ15_theta + GQ15_theta_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ35_theta_covp = ifelse(log(frailty_theta) >= (GQ35_theta - GQ35_theta_se * qnorm(1 - 0.05/2)) & log(frailty_theta) <= (GQ35_theta + GQ35_theta_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ75_theta_covp = ifelse(log(frailty_theta) >= (GQ75_theta - GQ75_theta_se * qnorm(1 - 0.05/2)) & log(frailty_theta) <= (GQ75_theta + GQ75_theta_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ105_theta_covp = ifelse(log(frailty_theta) >= (GQ105_theta - GQ105_theta_se * qnorm(1 - 0.05/2)) & log(frailty_theta) <= (GQ105_theta + GQ105_theta_se * qnorm(1 - 0.05/2)), 1, 0),
+         IN_theta_covp = ifelse(log(frailty_theta) >= (IN_theta - IN_theta_se * qnorm(1 - 0.05/2)) & log(frailty_theta) <= (IN_theta + IN_theta_se * qnorm(1 - 0.05/2)), 1, 0),
          AF_lambda_covp = ifelse(log(lambda) >= (AF_lambda - AF_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (AF_lambda + AF_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
-         GQ_lambda_covp = ifelse(log(lambda) >= (GQ_lambda - GQ_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (GQ_lambda + GQ_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ15_lambda_covp = ifelse(log(lambda) >= (GQ15_lambda - GQ15_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (GQ15_lambda + GQ15_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ35_lambda_covp = ifelse(log(lambda) >= (GQ35_lambda - GQ35_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (GQ35_lambda + GQ35_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ75_lambda_covp = ifelse(log(lambda) >= (GQ75_lambda - GQ75_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (GQ75_lambda + GQ75_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ105_lambda_covp = ifelse(log(lambda) >= (GQ105_lambda - GQ105_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (GQ105_lambda + GQ105_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
+         IN_lambda_covp = ifelse(log(lambda) >= (IN_lambda - IN_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (IN_lambda + IN_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
          AF_p_covp = ifelse(log(p) >= (AF_p - AF_p_se * qnorm(1 - 0.05/2)) & log(p) <= (AF_p + AF_p_se * qnorm(1 - 0.05/2)), 1, 0),
-         GQ_p_covp = ifelse(log(p) >= (GQ_p - GQ_p_se * qnorm(1 - 0.05/2)) & log(p) <= (GQ_p + GQ_p_se * qnorm(1 - 0.05/2)), 1, 0)) %>% 
-  group_by(n_individuals, n_clusters, frailty_theta, treatment_effect, ngl, lambda, p) %>% 
+         GQ15_p_covp = ifelse(log(p) >= (GQ15_p - GQ15_p_se * qnorm(1 - 0.05/2)) & log(p) <= (GQ15_p + GQ15_p_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ35_p_covp = ifelse(log(p) >= (GQ35_p - GQ35_p_se * qnorm(1 - 0.05/2)) & log(p) <= (GQ35_p + GQ35_p_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ75_p_covp = ifelse(log(p) >= (GQ75_p - GQ75_p_se * qnorm(1 - 0.05/2)) & log(p) <= (GQ75_p + GQ75_p_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ105_p_covp = ifelse(log(p) >= (GQ105_p - GQ105_p_se * qnorm(1 - 0.05/2)) & log(p) <= (GQ105_p + GQ105_p_se * qnorm(1 - 0.05/2)), 1, 0),
+         IN_p_covp = ifelse(log(p) >= (IN_p - IN_p_se * qnorm(1 - 0.05/2)) & log(p) <= (IN_p + IN_p_se * qnorm(1 - 0.05/2)), 1, 0)) %>% 
+  group_by(n_individuals, n_clusters, frailty_theta, treatment_effect, lambda, p) %>% 
   summarise(AF_convp = mean(AF_convergence == 0),
-            GQ_convp = mean(GQ_convergence == 0),
+            GQ15_convp = mean(GQ15_convergence == 0),
+            GQ35_convp = mean(GQ35_convergence == 0),
+            GQ75_convp = mean(GQ75_convergence == 0),
+            GQ105_convp = mean(GQ105_convergence == 0),
+            IN_convp = mean(IN_convergence == 0),
             AF_convn = sum(AF_convergence == 0),
-            GQ_convn = sum(GQ_convergence == 0),
+            GQ15_convn = sum(GQ15_convergence == 0),
+            GQ35_convn = sum(GQ35_convergence == 0),
+            GQ75_convn = sum(GQ75_convergence == 0),
+            GQ105_convn = sum(GQ105_convergence == 0),
+            IN_convn = sum(IN_convergence == 0),
             AF_trt_mean = mean(AF_trt, na.rm = TRUE),
-            GQ_trt_mean = mean(GQ_trt, na.rm = TRUE),
+            GQ15_trt_mean = mean(GQ15_trt, na.rm = TRUE),
+            GQ35_trt_mean = mean(GQ35_trt, na.rm = TRUE),
+            GQ75_trt_mean = mean(GQ75_trt, na.rm = TRUE),
+            GQ105_trt_mean = mean(GQ105_trt, na.rm = TRUE),
+            IN_trt_mean = mean(IN_trt, na.rm = TRUE),
             AF_trt_median = median(AF_trt, na.rm = TRUE),
-            GQ_trt_median = median(GQ_trt, na.rm = TRUE),
+            GQ15_trt_median = median(GQ15_trt, na.rm = TRUE),
+            GQ35_trt_median = median(GQ35_trt, na.rm = TRUE),
+            GQ75_trt_median = median(GQ75_trt, na.rm = TRUE),
+            GQ105_trt_median = median(GQ105_trt, na.rm = TRUE),
+            IN_trt_median = median(IN_trt, na.rm = TRUE),
             AF_trt_se_mean = mean(AF_trt_se, na.rm = TRUE),
-            GQ_trt_se_mean = mean(GQ_trt_se, na.rm = TRUE),
+            GQ15_trt_se_mean = mean(GQ15_trt_se, na.rm = TRUE),
+            GQ35_trt_se_mean = mean(GQ35_trt_se, na.rm = TRUE),
+            GQ75_trt_se_mean = mean(GQ75_trt_se, na.rm = TRUE),
+            GQ105_trt_se_mean = mean(GQ105_trt_se, na.rm = TRUE),
+            IN_trt_se_mean = mean(IN_trt_se, na.rm = TRUE),
             AF_trt_se_median = median(AF_trt_se, na.rm = TRUE),
-            GQ_trt_se_median = median(GQ_trt_se, na.rm = TRUE),
+            GQ15_trt_se_median = median(GQ15_trt_se, na.rm = TRUE),
+            GQ35_trt_se_median = median(GQ35_trt_se, na.rm = TRUE),
+            GQ75_trt_se_median = median(GQ75_trt_se, na.rm = TRUE),
+            GQ105_trt_se_median = median(GQ105_trt_se, na.rm = TRUE),
+            IN_trt_se_median = median(IN_trt_se, na.rm = TRUE),
             AF_trt_empse = sqrt((1 / (n() - 1)) * sum((AF_trt - AF_trt_mean) ^ 2, na.rm = TRUE)),
-            GQ_trt_empse = sqrt((1 / (n() - 1)) * sum((GQ_trt - GQ_trt_mean) ^ 2, na.rm = TRUE)),
+            GQ15_trt_empse = sqrt((1 / (n() - 1)) * sum((GQ15_trt - GQ15_trt_mean) ^ 2, na.rm = TRUE)),
+            GQ35_trt_empse = sqrt((1 / (n() - 1)) * sum((GQ35_trt - GQ35_trt_mean) ^ 2, na.rm = TRUE)),
+            GQ75_trt_empse = sqrt((1 / (n() - 1)) * sum((GQ75_trt - GQ75_trt_mean) ^ 2, na.rm = TRUE)),
+            GQ105_trt_empse = sqrt((1 / (n() - 1)) * sum((GQ105_trt - GQ105_trt_mean) ^ 2, na.rm = TRUE)),
+            IN_trt_empse = sqrt((1 / (n() - 1)) * sum((IN_trt - IN_trt_mean) ^ 2, na.rm = TRUE)),
             AF_trt_bias = mean(AF_trt_bias, na.rm = TRUE),
-            GQ_trt_bias = mean(GQ_trt_bias, na.rm = TRUE),
+            GQ15_trt_bias = mean(GQ15_trt_bias, na.rm = TRUE),
+            GQ35_trt_bias = mean(GQ35_trt_bias, na.rm = TRUE),
+            GQ75_trt_bias = mean(GQ75_trt_bias, na.rm = TRUE),
+            GQ105_trt_bias = mean(GQ105_trt_bias, na.rm = TRUE),
+            IN_trt_bias = mean(IN_trt_bias, na.rm = TRUE),
+            AF_trt_pbias = mean(AF_trt_pbias, na.rm = TRUE),
+            GQ15_trt_pbias = mean(GQ15_trt_pbias, na.rm = TRUE),
+            GQ35_trt_pbias = mean(GQ35_trt_pbias, na.rm = TRUE),
+            GQ75_trt_pbias = mean(GQ75_trt_pbias, na.rm = TRUE),
+            GQ105_trt_pbias = mean(GQ105_trt_pbias, na.rm = TRUE),
+            IN_trt_pbias = mean(IN_trt_pbias, na.rm = TRUE),
             AF_trt_covp = mean(AF_trt_covp, na.rm = TRUE),
-            GQ_trt_covp = mean(GQ_trt_covp, na.rm = TRUE),
+            GQ15_trt_covp = mean(GQ15_trt_covp, na.rm = TRUE),
+            GQ35_trt_covp = mean(GQ35_trt_covp, na.rm = TRUE),
+            GQ75_trt_covp = mean(GQ75_trt_covp, na.rm = TRUE),
+            GQ105_trt_covp = mean(GQ105_trt_covp, na.rm = TRUE),
+            IN_trt_covp = mean(IN_trt_covp, na.rm = TRUE),
             AF_theta_mean = mean(AF_theta, na.rm = TRUE),
-            GQ_theta_mean = mean(GQ_theta, na.rm = TRUE),
+            GQ15_theta_mean = mean(GQ15_theta, na.rm = TRUE),
+            GQ35_theta_mean = mean(GQ35_theta, na.rm = TRUE),
+            GQ75_theta_mean = mean(GQ75_theta, na.rm = TRUE),
+            GQ105_theta_mean = mean(GQ105_theta, na.rm = TRUE),
+            IN_theta_mean = mean(IN_theta, na.rm = TRUE),
             AF_theta_median = median(AF_theta, na.rm = TRUE),
-            GQ_theta_median = median(GQ_theta, na.rm = TRUE),
+            GQ15_theta_median = median(GQ15_theta, na.rm = TRUE),
+            GQ35_theta_median = median(GQ35_theta, na.rm = TRUE),
+            GQ75_theta_median = median(GQ75_theta, na.rm = TRUE),
+            GQ105_theta_median = median(GQ105_theta, na.rm = TRUE),
+            IN_theta_median = median(IN_theta, na.rm = TRUE),
             AF_theta_se_mean = mean(AF_theta_se, na.rm = TRUE),
-            GQ_theta_se_mean = mean(GQ_theta_se, na.rm = TRUE),
+            GQ15_theta_se_mean = mean(GQ15_theta_se, na.rm = TRUE),
+            GQ35_theta_se_mean = mean(GQ35_theta_se, na.rm = TRUE),
+            GQ75_theta_se_mean = mean(GQ75_theta_se, na.rm = TRUE),
+            GQ105_theta_se_mean = mean(GQ105_theta_se, na.rm = TRUE),
+            IN_theta_se_mean = mean(IN_theta_se, na.rm = TRUE),
             AF_theta_se_median = median(AF_theta_se, na.rm = TRUE),
-            GQ_theta_se_median = median(GQ_theta_se, na.rm = TRUE),
+            GQ15_theta_se_median = median(GQ15_theta_se, na.rm = TRUE),
+            GQ35_theta_se_median = median(GQ35_theta_se, na.rm = TRUE),
+            GQ75_theta_se_median = median(GQ75_theta_se, na.rm = TRUE),
+            GQ105_theta_se_median = median(GQ105_theta_se, na.rm = TRUE),
+            IN_theta_se_median = median(IN_theta_se, na.rm = TRUE),
             AF_theta_empse = sqrt((1 / (n() - 1)) * sum((AF_theta - AF_theta_mean) ^ 2, na.rm = TRUE)),
-            GQ_theta_empse = sqrt((1 / (n() - 1)) * sum((GQ_theta - GQ_theta_mean) ^ 2, na.rm = TRUE)),
+            GQ15_theta_empse = sqrt((1 / (n() - 1)) * sum((GQ15_theta - GQ15_theta_mean) ^ 2, na.rm = TRUE)),
+            GQ35_theta_empse = sqrt((1 / (n() - 1)) * sum((GQ35_theta - GQ35_theta_mean) ^ 2, na.rm = TRUE)),
+            GQ75_theta_empse = sqrt((1 / (n() - 1)) * sum((GQ75_theta - GQ75_theta_mean) ^ 2, na.rm = TRUE)),
+            GQ105_theta_empse = sqrt((1 / (n() - 1)) * sum((GQ105_theta - GQ105_theta_mean) ^ 2, na.rm = TRUE)),
+            IN_theta_empse = sqrt((1 / (n() - 1)) * sum((IN_theta - IN_theta_mean) ^ 2, na.rm = TRUE)),
             AF_theta_bias = mean(AF_theta_bias, na.rm = TRUE),
-            GQ_theta_bias = mean(GQ_theta_bias, na.rm = TRUE),
+            GQ15_theta_bias = mean(GQ15_theta_bias, na.rm = TRUE),
+            GQ35_theta_bias = mean(GQ35_theta_bias, na.rm = TRUE),
+            GQ75_theta_bias = mean(GQ75_theta_bias, na.rm = TRUE),
+            GQ105_theta_bias = mean(GQ105_theta_bias, na.rm = TRUE),
+            IN_theta_bias = mean(IN_theta_bias, na.rm = TRUE),
+            AF_theta_pbias = mean(AF_theta_pbias, na.rm = TRUE),
+            GQ15_theta_pbias = mean(GQ15_theta_pbias, na.rm = TRUE),
+            GQ35_theta_pbias = mean(GQ35_theta_pbias, na.rm = TRUE),
+            GQ75_theta_pbias = mean(GQ75_theta_pbias, na.rm = TRUE),
+            GQ105_theta_pbias = mean(GQ105_theta_pbias, na.rm = TRUE),
+            IN_theta_pbias = mean(IN_theta_pbias, na.rm = TRUE),
             AF_theta_covp = mean(AF_theta_covp, na.rm = TRUE),
-            GQ_theta_covp = mean(GQ_theta_covp, na.rm = TRUE),
+            GQ15_theta_covp = mean(GQ15_theta_covp, na.rm = TRUE),
+            GQ35_theta_covp = mean(GQ35_theta_covp, na.rm = TRUE),
+            GQ75_theta_covp = mean(GQ75_theta_covp, na.rm = TRUE),
+            GQ105_theta_covp = mean(GQ105_theta_covp, na.rm = TRUE),
+            IN_theta_covp = mean(IN_theta_covp, na.rm = TRUE),
             AF_lambda_mean = mean(AF_lambda, na.rm = TRUE),
-            GQ_lambda_mean = mean(GQ_lambda, na.rm = TRUE),
+            GQ15_lambda_mean = mean(GQ15_lambda, na.rm = TRUE),
+            GQ35_lambda_mean = mean(GQ35_lambda, na.rm = TRUE),
+            GQ75_lambda_mean = mean(GQ75_lambda, na.rm = TRUE),
+            GQ105_lambda_mean = mean(GQ105_lambda, na.rm = TRUE),
+            IN_lambda_mean = mean(IN_lambda, na.rm = TRUE),
             AF_lambda_median = median(AF_lambda, na.rm = TRUE),
-            GQ_lambda_median = median(GQ_lambda, na.rm = TRUE),
+            GQ15_lambda_median = median(GQ15_lambda, na.rm = TRUE),
+            GQ35_lambda_median = median(GQ35_lambda, na.rm = TRUE),
+            GQ75_lambda_median = median(GQ75_lambda, na.rm = TRUE),
+            GQ105_lambda_median = median(GQ105_lambda, na.rm = TRUE),
+            IN_lambda_median = median(IN_lambda, na.rm = TRUE),
             AF_lambda_se_mean = mean(AF_lambda_se, na.rm = TRUE),
-            GQ_lambda_se_mean = mean(GQ_lambda_se, na.rm = TRUE),
+            GQ15_lambda_se_mean = mean(GQ15_lambda_se, na.rm = TRUE),
+            GQ35_lambda_se_mean = mean(GQ35_lambda_se, na.rm = TRUE),
+            GQ75_lambda_se_mean = mean(GQ75_lambda_se, na.rm = TRUE),
+            GQ105_lambda_se_mean = mean(GQ105_lambda_se, na.rm = TRUE),
+            IN_lambda_se_mean = mean(IN_lambda_se, na.rm = TRUE),
             AF_lambda_se_median = median(AF_lambda_se, na.rm = TRUE),
-            GQ_lambda_se_median = median(GQ_lambda_se, na.rm = TRUE),
+            GQ15_lambda_se_median = median(GQ15_lambda_se, na.rm = TRUE),
+            GQ35_lambda_se_median = median(GQ35_lambda_se, na.rm = TRUE),
+            GQ75_lambda_se_median = median(GQ75_lambda_se, na.rm = TRUE),
+            GQ105_lambda_se_median = median(GQ105_lambda_se, na.rm = TRUE),
+            IN_lambda_se_median = median(IN_lambda_se, na.rm = TRUE),
             AF_lambda_empse = sqrt((1 / (n() - 1)) * sum((AF_lambda - AF_lambda_mean) ^ 2, na.rm = TRUE)),
-            GQ_lambda_empse = sqrt((1 / (n() - 1)) * sum((GQ_lambda - GQ_lambda_mean) ^ 2, na.rm = TRUE)),
+            GQ15_lambda_empse = sqrt((1 / (n() - 1)) * sum((GQ15_lambda - GQ15_lambda_mean) ^ 2, na.rm = TRUE)),
+            GQ35_lambda_empse = sqrt((1 / (n() - 1)) * sum((GQ35_lambda - GQ35_lambda_mean) ^ 2, na.rm = TRUE)),
+            GQ75_lambda_empse = sqrt((1 / (n() - 1)) * sum((GQ75_lambda - GQ75_lambda_mean) ^ 2, na.rm = TRUE)),
+            GQ105_lambda_empse = sqrt((1 / (n() - 1)) * sum((GQ105_lambda - GQ105_lambda_mean) ^ 2, na.rm = TRUE)),
+            IN_lambda_empse = sqrt((1 / (n() - 1)) * sum((IN_lambda - IN_lambda_mean) ^ 2, na.rm = TRUE)),
             AF_lambda_bias = mean(AF_lambda_bias, na.rm = TRUE),
-            GQ_lambda_bias = mean(GQ_lambda_bias, na.rm = TRUE),
+            GQ15_lambda_bias = mean(GQ15_lambda_bias, na.rm = TRUE),
+            GQ35_lambda_bias = mean(GQ35_lambda_bias, na.rm = TRUE),
+            GQ75_lambda_bias = mean(GQ75_lambda_bias, na.rm = TRUE),
+            GQ105_lambda_bias = mean(GQ105_lambda_bias, na.rm = TRUE),
+            IN_lambda_bias = mean(IN_lambda_bias, na.rm = TRUE),
+            AF_lambda_pbias = mean(AF_lambda_pbias, na.rm = TRUE),
+            GQ15_lambda_pbias = mean(GQ15_lambda_pbias, na.rm = TRUE),
+            GQ35_lambda_pbias = mean(GQ35_lambda_pbias, na.rm = TRUE),
+            GQ75_lambda_pbias = mean(GQ75_lambda_pbias, na.rm = TRUE),
+            GQ105_lambda_pbias = mean(GQ105_lambda_pbias, na.rm = TRUE),
+            IN_lambda_pbias = mean(IN_lambda_pbias, na.rm = TRUE),
             AF_lambda_covp = mean(AF_lambda_covp, na.rm = TRUE),
-            GQ_lambda_covp = mean(GQ_lambda_covp, na.rm = TRUE),
+            GQ15_lambda_covp = mean(GQ15_lambda_covp, na.rm = TRUE),
+            GQ35_lambda_covp = mean(GQ35_lambda_covp, na.rm = TRUE),
+            GQ75_lambda_covp = mean(GQ75_lambda_covp, na.rm = TRUE),
+            GQ105_lambda_covp = mean(GQ105_lambda_covp, na.rm = TRUE),
+            IN_lambda_covp = mean(IN_lambda_covp, na.rm = TRUE),
             AF_p_mean = mean(AF_p, na.rm = TRUE),
-            GQ_p_mean = mean(GQ_p, na.rm = TRUE),
+            GQ15_p_mean = mean(GQ15_p, na.rm = TRUE),
+            GQ35_p_mean = mean(GQ35_p, na.rm = TRUE),
+            GQ75_p_mean = mean(GQ75_p, na.rm = TRUE),
+            GQ105_p_mean = mean(GQ105_p, na.rm = TRUE),
+            IN_p_mean = mean(IN_p, na.rm = TRUE),
             AF_p_median = median(AF_p, na.rm = TRUE),
-            GQ_p_median = median(GQ_p, na.rm = TRUE),
+            GQ15_p_median = median(GQ15_p, na.rm = TRUE),
+            GQ35_p_median = median(GQ35_p, na.rm = TRUE),
+            GQ75_p_median = median(GQ75_p, na.rm = TRUE),
+            GQ105_p_median = median(GQ105_p, na.rm = TRUE),
+            IN_p_median = median(IN_p, na.rm = TRUE),
             AF_p_se_mean = mean(AF_p_se, na.rm = TRUE),
-            GQ_p_se_mean = mean(GQ_p_se, na.rm = TRUE),
+            GQ15_p_se_mean = mean(GQ15_p_se, na.rm = TRUE),
+            GQ35_p_se_mean = mean(GQ35_p_se, na.rm = TRUE),
+            GQ75_p_se_mean = mean(GQ75_p_se, na.rm = TRUE),
+            GQ105_p_se_mean = mean(GQ105_p_se, na.rm = TRUE),
+            IN_p_se_mean = mean(IN_p_se, na.rm = TRUE),
             AF_p_se_median = median(AF_p_se, na.rm = TRUE),
-            GQ_p_se_median = median(GQ_p_se, na.rm = TRUE),
+            GQ15_p_se_median = median(GQ15_p_se, na.rm = TRUE),
+            GQ35_p_se_median = median(GQ35_p_se, na.rm = TRUE),
+            GQ75_p_se_median = median(GQ75_p_se, na.rm = TRUE),
+            GQ105_p_se_median = median(GQ105_p_se, na.rm = TRUE),
+            IN_p_se_median = median(IN_p_se, na.rm = TRUE),
             AF_p_empse = sqrt((1 / (n() - 1)) * sum((AF_p - AF_p_mean) ^ 2, na.rm = TRUE)),
-            GQ_p_empse = sqrt((1 / (n() - 1)) * sum((GQ_p - GQ_p_mean) ^ 2, na.rm = TRUE)),
+            GQ15_p_empse = sqrt((1 / (n() - 1)) * sum((GQ15_p - GQ15_p_mean) ^ 2, na.rm = TRUE)),
+            GQ35_p_empse = sqrt((1 / (n() - 1)) * sum((GQ35_p - GQ35_p_mean) ^ 2, na.rm = TRUE)),
+            GQ75_p_empse = sqrt((1 / (n() - 1)) * sum((GQ75_p - GQ75_p_mean) ^ 2, na.rm = TRUE)),
+            GQ105_p_empse = sqrt((1 / (n() - 1)) * sum((GQ105_p - GQ105_p_mean) ^ 2, na.rm = TRUE)),
+            IN_p_empse = sqrt((1 / (n() - 1)) * sum((IN_p - IN_p_mean) ^ 2, na.rm = TRUE)),
             AF_p_bias = mean(AF_p_bias, na.rm = TRUE),
-            GQ_p_bias = mean(GQ_p_bias, na.rm = TRUE),
+            GQ15_p_bias = mean(GQ15_p_bias, na.rm = TRUE),
+            GQ35_p_bias = mean(GQ35_p_bias, na.rm = TRUE),
+            GQ75_p_bias = mean(GQ75_p_bias, na.rm = TRUE),
+            GQ105_p_bias = mean(GQ105_p_bias, na.rm = TRUE),
+            IN_p_bias = mean(IN_p_bias, na.rm = TRUE),
+            AF_p_pbias = mean(AF_p_pbias, na.rm = TRUE),
+            GQ15_p_pbias = mean(GQ15_p_pbias, na.rm = TRUE),
+            GQ35_p_pbias = mean(GQ35_p_pbias, na.rm = TRUE),
+            GQ75_p_pbias = mean(GQ75_p_pbias, na.rm = TRUE),
+            GQ105_p_pbias = mean(GQ105_p_pbias, na.rm = TRUE),
+            IN_p_pbias = mean(IN_p_pbias, na.rm = TRUE),
             AF_p_covp = mean(AF_p_covp, na.rm = TRUE),
-            GQ_p_covp = mean(GQ_p_covp, na.rm = TRUE)) %>% 
+            GQ15_p_covp = mean(GQ15_p_covp, na.rm = TRUE), 
+            GQ35_p_covp = mean(GQ35_p_covp, na.rm = TRUE), 
+            GQ75_p_covp = mean(GQ75_p_covp, na.rm = TRUE), 
+            GQ105_p_covp = mean(GQ105_p_covp, na.rm = TRUE), 
+            IN_p_covp = mean(IN_p_covp, na.rm = TRUE)) %>% 
   mutate(AF_trt_mse = AF_trt_bias ^ 2 + AF_trt_empse ^ 2,
-         GQ_trt_mse = GQ_trt_bias ^ 2 + GQ_trt_empse ^ 2,
+         GQ15_trt_mse = GQ15_trt_bias ^ 2 + GQ15_trt_empse ^ 2,
+         GQ35_trt_mse = GQ35_trt_bias ^ 2 + GQ35_trt_empse ^ 2,
+         GQ75_trt_mse = GQ75_trt_bias ^ 2 + GQ75_trt_empse ^ 2,
+         GQ105_trt_mse = GQ105_trt_bias ^ 2 + GQ105_trt_empse ^ 2,
+         IN_trt_mse = IN_trt_bias ^ 2 + IN_trt_empse ^ 2,
          AF_theta_mse = AF_theta_bias ^ 2 + AF_theta_empse ^ 2,
-         GQ_theta_mse = GQ_theta_bias ^ 2 + GQ_theta_empse ^ 2,
+         GQ15_theta_mse = GQ15_theta_bias ^ 2 + GQ15_theta_empse ^ 2,
+         GQ35_theta_mse = GQ35_theta_bias ^ 2 + GQ35_theta_empse ^ 2,
+         GQ75_theta_mse = GQ75_theta_bias ^ 2 + GQ75_theta_empse ^ 2,
+         GQ105_theta_mse = GQ105_theta_bias ^ 2 + GQ105_theta_empse ^ 2,
+         IN_theta_mse = IN_theta_bias ^ 2 + IN_theta_empse ^ 2,
          AF_lambda_mse = AF_lambda_bias ^ 2 + AF_lambda_empse ^ 2,
-         GQ_lambda_mse = GQ_lambda_bias ^ 2 + GQ_lambda_empse ^ 2,
+         GQ15_lambda_mse = GQ15_lambda_bias ^ 2 + GQ15_lambda_empse ^ 2,
+         GQ35_lambda_mse = GQ35_lambda_bias ^ 2 + GQ35_lambda_empse ^ 2,
+         GQ75_lambda_mse = GQ75_lambda_bias ^ 2 + GQ75_lambda_empse ^ 2,
+         GQ105_lambda_mse = GQ105_lambda_bias ^ 2 + GQ105_lambda_empse ^ 2,
+         IN_lambda_mse = IN_lambda_bias ^ 2 + IN_lambda_empse ^ 2,
          AF_p_mse = AF_p_bias ^ 2 + AF_p_empse ^ 2,
-         GQ_p_mse = GQ_p_bias ^ 2 + GQ_p_empse ^ 2)
+         GQ15_p_mse = GQ15_p_bias ^ 2 + GQ15_p_empse ^ 2,
+         GQ35_p_mse = GQ35_p_bias ^ 2 + GQ35_p_empse ^ 2,
+         GQ75_p_mse = GQ75_p_bias ^ 2 + GQ75_p_empse ^ 2,
+         GQ105_p_mse = GQ105_p_bias ^ 2 + GQ105_p_empse ^ 2,
+         IN_p_mse = IN_p_bias ^ 2 + IN_p_empse ^ 2)
 
-saveRDS(s_an_vs_gq_summary, "r_AF_vs_GQ/s_an_vs_gq_summary.RDS")
+saveRDS(s_an_vs_gq_vs_int_summary, "SiReX/s_an_vs_gq_vs_int_summary.RDS")
+
+r_an_vs_gq_vs_int <- s_an_vs_gq_vs_int_summary %>%
+  gather(key = key, value = value, 7:234) %>%
+  separate(key, c("method", "name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat),
+         method = factor(method, levels = c("AF", "GQ15", "GQ35", "GQ75", "GQ105", "IN")))
 ```
-
-<center>
-<button type="button" onClick="document.getElementById('resIF').src='http://ag475.shinyapps.io/shinyapp'; this.parentNode.style.display = 'none';">Load results...</button>
-</center>
-
-<iframe id="resIF" style="border: none; width: 95%; height: 700px"></iframe>
 
 ### Convergence
 
@@ -402,63 +616,31 @@ Number of simulations converging:
 
 ```{r}
 # By n_individuals:
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^convn", stat)) %>%
   ggplot(aes(x = factor(n_individuals), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
-  theme(legend.position = c(1, 0), legend.justification = c(1, 0), legend.background = element_blank()) + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "N. of individuals per cluster", y = "N. of simulations converging", color = "")
 
 # By n_clusters:
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^convn", stat)) %>%
   ggplot(aes(x = factor(n_clusters), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "N. of clusters", y = "N. of simulations converging", color = "")
 
-# By n_individuals x n_clusters
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^convn", stat)) %>%
-  rename(`N. ind` = n_individuals, `N. clusters` = n_clusters) %>% 
-  ggplot(aes(x = method, y = value)) +
-  facet_grid(`N. clusters` ~ `N. ind` , labeller = label_both) +
-  geom_jitter(height = 0) + 
-  geom_boxplot(alpha = 3/4) + 
-  scale_y_continuous(labels = scales::comma) +
-  theme_bw() + 
-  labs(x = "", y = "N. of simulations converging")
-
 # By treatment_effect:
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^convn", stat)) %>%
   ggplot(aes(x = factor(treatment_effect), y = value, color = method)) +
   geom_jitter(height = 0) + 
@@ -470,12 +652,7 @@ s_an_vs_gq_summary %>%
   labs(x = "Treatment effect", y = "N. of simulations converging", color = "")
 
 # By frailty_theta:
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^convn", stat)) %>%
   ggplot(aes(x = factor(frailty_theta), y = value, color = method)) +
   geom_jitter(height = 0) + 
@@ -483,166 +660,89 @@ s_an_vs_gq_summary %>%
   scale_color_brewer(type = "qual", palette = "Set1") + 
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
-  theme(legend.position = c(1, 0), legend.justification = c(1, 0), legend.background = element_blank()) + 
-  labs(x = "Frailty variance", y = "N. of simulations converging", color = "")
-
-# By ngl:
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^convn", stat)) %>%
-  ggplot(aes(x = factor(ngl), y = value, color = method)) +
-  geom_jitter(height = 0) + 
-  geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
-  scale_y_continuous(labels = scales::comma) +
-  theme_bw() + 
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
-  labs(x = "Gauss-Laguerre knots", y = "N. of simulations converging", color = "")
+  labs(x = "Frailty variance", y = "N. of simulations converging", color = "")
 ```
 
 Proportion of simulations converging:
 
 ```{r}
 # By n_individuals:
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^convp", stat)) %>%
   ggplot(aes(x = factor(n_individuals), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) +
   theme_bw() + 
-  theme(legend.position = c(1, 0), legend.justification = c(1, 0), legend.background = element_blank()) + 
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "N. of individuals per cluster", y = "P. of simulations converging", color = "")
 
 # By n_clusters:
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^convp", stat)) %>%
   ggplot(aes(x = factor(n_clusters), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) +
   theme_bw() + 
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "N. of clusters", y = "P. of simulations converging", color = "")
 
-# By n_individuals x n_clusters
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^convp", stat)) %>%
-  rename(`N. ind` = n_individuals, `N. clusters` = n_clusters) %>% 
-  ggplot(aes(x = method, y = value)) +
-  facet_grid(`N. clusters` ~ `N. ind` , labeller = label_both) +
-  geom_jitter(height = 0) + 
-  geom_boxplot(alpha = 3/4) + 
-  scale_y_continuous(labels = scales::comma) +
-  theme_bw() + 
-  labs(x = "", y = "N. of simulations converging")
-
 # By treatment_effect:
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^convp", stat)) %>%
   ggplot(aes(x = factor(treatment_effect), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) +
   theme_bw() + 
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "Treatment effect", y = "P. of simulations converging", color = "")
 
 # By frailty_theta:
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^convp", stat)) %>%
   ggplot(aes(x = factor(frailty_theta), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
-  scale_y_continuous(labels = scales::percent) +
-  theme_bw() + 
-  theme(legend.position = c(1, 0), legend.justification = c(1, 0), legend.background = element_blank()) + 
-  labs(x = "Frailty variance", y = "P. of simulations converging", color = "")
-
-# By ngl:
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^convp", stat)) %>%
-  ggplot(aes(x = factor(ngl), y = value, color = method)) +
-  geom_jitter(height = 0) + 
-  geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) +
   theme_bw() + 
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
-  labs(x = "Gauss-Laguerre knots", y = "P. of simulations converging", color = "")
+  labs(x = "Frailty variance", y = "P. of simulations converging", color = "")
 ```
 
 ### Estimated values
 
+Average values:
+
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^mean", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   theme_bw() + 
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "", y = "Estimates (Mean)", color = "")
 ```
 
+Median values:
+
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^median", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   theme_bw() + 
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "", y = "Estimates (Median)", color = "")
@@ -653,147 +753,162 @@ s_an_vs_gq_summary %>%
 Overall:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^bias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   theme_bw() + 
-  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  theme(legend.position = c(1, 1), legend.justification = c(1, 1), legend.background = element_blank()) + 
   labs(x = "", y = "Bias", color = "")
 ```
 
 Bias by treatment effect:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^bias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   facet_wrap(~ treatment_effect) +
   theme_bw() + 
-  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  theme(legend.position = c(1, 1), legend.justification = c(1, 1), legend.background = element_blank()) + 
   labs(x = "", y = "Bias", color = "")
 ```
 
 Bias by frailty variance:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^bias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   facet_wrap(~ frailty_theta) +
   theme_bw() + 
-  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
-  labs(x = "", y = "Bias", color = "")
-```
-
-Bias by number of quadrature nodes:
-
-```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^bias", stat)) %>% 
-  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = method, y = value, color = name)) +
-  geom_jitter(height = 0, alpha = 3/4) + 
-  geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
-  facet_wrap(~ ngl) +
-  theme_bw() + 
-  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  theme(legend.position = c(1, 1), legend.justification = c(1, 1), legend.background = element_blank()) + 
   labs(x = "", y = "Bias", color = "")
 ```
 
 Bias by number of clusters:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^bias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   facet_wrap(~ n_clusters) +
   theme_bw() + 
-  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  theme(legend.position = c(1, 1), legend.justification = c(1, 1), legend.background = element_blank()) + 
   labs(x = "", y = "Bias", color = "")
 ```
 
 Bias by number of individuals:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^bias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   facet_wrap(~ n_individuals) +
   theme_bw() + 
-  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  theme(legend.position = c(1, 1), legend.justification = c(1, 1), legend.background = element_blank()) + 
   labs(x = "", y = "Bias", color = "")
 ```
 
-Bias by number of clusters and number of individuals:
+### Percentage bias
+
+Overall:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^bias", stat)) %>% 
+r_an_vs_gq_vs_int %>% 
+  filter(grepl("^pbias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>%
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() + 
+  theme(legend.position = c(1, 1), legend.justification = c(1, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Percentage bias", color = "")
+```
+
+Percentage bias by treatment effect:
+
+```{r}
+r_an_vs_gq_vs_int %>% 
+  filter(grepl("^pbias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
-  facet_grid(n_individuals ~ n_clusters) +
+  scale_color_colorblind() +
+  facet_wrap(~ treatment_effect) +
   theme_bw() + 
-  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
-  labs(x = "", y = "Bias", color = "")
+  theme(legend.position = c(1, 1), legend.justification = c(1, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Percentage bias", color = "")
+```
+
+Percentage bias by frailty variance:
+
+```{r}
+r_an_vs_gq_vs_int %>% 
+  filter(grepl("^pbias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  facet_wrap(~ frailty_theta) +
+  theme_bw() + 
+  theme(legend.position = c(1, 1), legend.justification = c(1, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Percentage bias", color = "")
+```
+
+Percentage bias by number of clusters:
+
+```{r}
+r_an_vs_gq_vs_int %>% 
+  filter(grepl("^pbias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  facet_wrap(~ n_clusters) +
+  theme_bw() + 
+  theme(legend.position = c(1, 1), legend.justification = c(1, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Percentage bias", color = "")
+```
+
+Percentage bias by number of individuals:
+
+```{r}
+r_an_vs_gq_vs_int %>% 
+  filter(grepl("^pbias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  facet_wrap(~ n_individuals) +
+  theme_bw() + 
+  theme(legend.position = c(1, 1), legend.justification = c(1, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Percentage bias", color = "")
 ```
 
 ### Coverage probability
@@ -801,18 +916,13 @@ s_an_vs_gq_summary %>%
 Overall:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^covp", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) + 
   theme_bw() + 
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
@@ -822,18 +932,13 @@ s_an_vs_gq_summary %>%
 Coverage probability by treatment effect:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^covp", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) + 
   facet_wrap(~ treatment_effect) +
   theme_bw() + 
@@ -844,42 +949,15 @@ s_an_vs_gq_summary %>%
 Coverage probability by frailty variance:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^covp", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) + 
   facet_wrap(~ frailty_theta) +
-  theme_bw() + 
-  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
-  labs(x = "", y = "Coverage probability", color = "")
-```
-
-Coverage probability by quadrature nodes:
-
-```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^covp", stat)) %>% 
-  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = method, y = value, color = name)) +
-  geom_jitter(height = 0) + 
-  geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
-  scale_y_continuous(labels = scales::percent) + 
-  facet_wrap(~ ngl) +
   theme_bw() + 
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "", y = "Coverage probability", color = "")
@@ -888,18 +966,13 @@ s_an_vs_gq_summary %>%
 Coverage probability by number of clusters:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^covp", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) + 
   facet_wrap(~ n_clusters) +
   theme_bw() + 
@@ -910,42 +983,15 @@ s_an_vs_gq_summary %>%
 Coverage probability by number of individuals:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^covp", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) + 
   facet_wrap(~ n_individuals) +
-  theme_bw() + 
-  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
-  labs(x = "", y = "Coverage probability", color = "")
-```
-
-Coverage probability by number of clusters and number of individuals:
-
-```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^covp", stat)) %>% 
-  mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = method, y = value, color = name)) +
-  geom_jitter(height = 0) + 
-  geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
-  scale_y_continuous(labels = scales::percent) + 
-  facet_grid(n_individuals ~ n_clusters) +
   theme_bw() + 
   theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "", y = "Coverage probability", color = "")
@@ -956,18 +1002,13 @@ s_an_vs_gq_summary %>%
 Average standard errors:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^se_mean", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) + 
   theme_bw() + 
   theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
@@ -977,18 +1018,13 @@ s_an_vs_gq_summary %>%
 Median standard errors:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^se_median", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) + 
   theme_bw() + 
   theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
@@ -998,18 +1034,13 @@ s_an_vs_gq_summary %>%
 Empirical standard errors:
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^empse", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) + 
   theme_bw() + 
   theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
@@ -1019,18 +1050,13 @@ s_an_vs_gq_summary %>%
 ### Mean square error
 
 ```{r}
-s_an_vs_gq_summary %>%
-  gather(key = key, value = value, 8:75) %>%
-  mutate(method = str_sub(key, 1, 2),
-         par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_an_vs_gq_vs_int %>% 
   filter(grepl("^mse", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "theta", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
   ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) + 
   theme_bw() + 
   theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
@@ -1042,51 +1068,225 @@ s_an_vs_gq_summary %>%
 ```{r}
 # Process the results and compute statistics of interest:
 s_normal_gq_summary <- s_normal_gq %>% 
-  mutate(GQ_trt_bias = GQ_trt - treatment_effect,
-         GQ_sigma_bias = GQ_sigma - log(frailty_sigma),
-         GQ_lambda_bias = GQ_lambda - log(lambda),
-         GQ_p_bias = GQ_p - log(p),
-         GQ_trt_covp = ifelse(treatment_effect >= (GQ_trt - GQ_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (GQ_trt + GQ_trt_se * qnorm(1 - 0.05/2)), 1, 0),
-         GQ_sigma_covp = ifelse(log(frailty_sigma) >= (GQ_sigma - GQ_sigma_se * qnorm(1 - 0.05/2)) & log(frailty_sigma) <= (GQ_sigma + GQ_sigma_se * qnorm(1 - 0.05/2)), 1, 0),
-         GQ_lambda_covp = ifelse(log(lambda) >= (GQ_lambda - GQ_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (GQ_lambda + GQ_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
-         GQ_p_covp = ifelse(log(p) >= (GQ_p - GQ_p_se * qnorm(1 - 0.05/2)) & log(p) <= (GQ_p + GQ_p_se * qnorm(1 - 0.05/2)), 1, 0)) %>% 
-  group_by(n_individuals, n_clusters, frailty_sigma, treatment_effect, ngh, lambda, p) %>% 
-  summarise(GQ_convp = mean(GQ_convergence == 0),
-            GQ_convn = sum(GQ_convergence == 0),
-            GQ_trt_mean = mean(GQ_trt, na.rm = TRUE),
-            GQ_trt_median = median(GQ_trt, na.rm = TRUE),
-            GQ_trt_se_mean = mean(GQ_trt_se, na.rm = TRUE),
-            GQ_trt_se_median = median(GQ_trt_se, na.rm = TRUE),
-            GQ_trt_empse = sqrt((1 / (n() - 1)) * sum((GQ_trt - GQ_trt_mean) ^ 2, na.rm = TRUE)),
-            GQ_trt_bias = mean(GQ_trt_bias, na.rm = TRUE),
-            GQ_trt_covp = mean(GQ_trt_covp, na.rm = TRUE),
-            GQ_sigma_mean = mean(GQ_sigma, na.rm = TRUE),
-            GQ_sigma_median = median(GQ_sigma, na.rm = TRUE),
-            GQ_sigma_se_mean = mean(GQ_sigma_se, na.rm = TRUE),
-            GQ_sigma_se_median = median(GQ_sigma_se, na.rm = TRUE),
-            GQ_sigma_empse = sqrt((1 / (n() - 1)) * sum((GQ_sigma - GQ_sigma_mean) ^ 2, na.rm = TRUE)),
-            GQ_sigma_bias = mean(GQ_sigma_bias, na.rm = TRUE),
-            GQ_sigma_covp = mean(GQ_sigma_covp, na.rm = TRUE),
-            GQ_lambda_mean = mean(GQ_lambda, na.rm = TRUE),
-            GQ_lambda_median = median(GQ_lambda, na.rm = TRUE),
-            GQ_lambda_se_mean = mean(GQ_lambda_se, na.rm = TRUE),
-            GQ_lambda_se_median = median(GQ_lambda_se, na.rm = TRUE),
-            GQ_lambda_empse = sqrt((1 / (n() - 1)) * sum((GQ_lambda - GQ_lambda_mean) ^ 2, na.rm = TRUE)),
-            GQ_lambda_bias = mean(GQ_lambda_bias, na.rm = TRUE),
-            GQ_lambda_covp = mean(GQ_lambda_covp, na.rm = TRUE),
-            GQ_p_mean = mean(GQ_p, na.rm = TRUE),
-            GQ_p_median = median(GQ_p, na.rm = TRUE),
-            GQ_p_se_mean = mean(GQ_p_se, na.rm = TRUE),
-            GQ_p_se_median = median(GQ_p_se, na.rm = TRUE),
-            GQ_p_empse = sqrt((1 / (n() - 1)) * sum((GQ_p - GQ_p_mean) ^ 2, na.rm = TRUE)),
-            GQ_p_bias = mean(GQ_p_bias, na.rm = TRUE),
-            GQ_p_covp = mean(GQ_p_covp, na.rm = TRUE)) %>% 
-  mutate(GQ_trt_mse = GQ_trt_bias ^ 2 + GQ_trt_empse ^ 2,
-         GQ_sigma_mse = GQ_sigma_bias ^ 2 + GQ_sigma_empse ^ 2,
-         GQ_lambda_mse = GQ_lambda_bias ^ 2 + GQ_lambda_empse ^ 2,
-         GQ_p_mse = GQ_p_bias ^ 2 + GQ_p_empse ^ 2)
+  gather(key = key, value = value, 9:18) %>% 
+  separate(key, c("a", "b"), sep = "_", extra = "merge") %>% 
+  mutate(key = paste0(a, ngh, "_", b)) %>%
+  select(-ngh, -a, -b) %>% 
+  spread(key = key, value = value) %>% 
+  group_by(seed, n_individuals, n_clusters, frailty_sigma, treatment_effect, lambda, p) %>%
+  arrange(seed) %>% 
+  ungroup()
 
-saveRDS(s_normal_gq_summary, "r_normal_GQ/s_normal_gq_summary.RDS")
+s_normal_gq_summary <- s_normal_gq_summary %>% 
+  mutate(GQ15_trt_bias = GQ15_trt - treatment_effect,
+         GQ35_trt_bias = GQ35_trt - treatment_effect,
+         GQ75_trt_bias = GQ75_trt - treatment_effect,
+         GQ105_trt_bias = GQ105_trt - treatment_effect,
+         GQ15_sigma_bias = GQ15_sigma - log(frailty_sigma),
+         GQ35_sigma_bias = GQ35_sigma - log(frailty_sigma),
+         GQ75_sigma_bias = GQ75_sigma - log(frailty_sigma),
+         GQ105_sigma_bias = GQ105_sigma - log(frailty_sigma),
+         GQ15_lambda_bias = GQ15_lambda - log(lambda),
+         GQ35_lambda_bias = GQ35_lambda - log(lambda),
+         GQ75_lambda_bias = GQ75_lambda - log(lambda),
+         GQ105_lambda_bias = GQ105_lambda - log(lambda),
+         GQ15_p_bias = GQ15_p - log(p),
+         GQ35_p_bias = GQ35_p - log(p),
+         GQ75_p_bias = GQ75_p - log(p),
+         GQ105_p_bias = GQ105_p - log(p),
+         GQ15_trt_pbias = (exp(GQ15_trt) - exp(treatment_effect)) / exp(treatment_effect),
+         GQ35_trt_pbias = (exp(GQ35_trt) - exp(treatment_effect)) / exp(treatment_effect),
+         GQ75_trt_pbias = (exp(GQ75_trt) - exp(treatment_effect)) / exp(treatment_effect),
+         GQ105_trt_pbias = (exp(GQ105_trt) - exp(treatment_effect)) / exp(treatment_effect),
+         GQ15_sigma_pbias = (exp(GQ15_sigma) - frailty_sigma) / frailty_sigma,
+         GQ35_sigma_pbias = (exp(GQ35_sigma) - frailty_sigma) / frailty_sigma,
+         GQ75_sigma_pbias = (exp(GQ75_sigma) - frailty_sigma) / frailty_sigma,
+         GQ105_sigma_pbias = (exp(GQ105_sigma) - frailty_sigma) / frailty_sigma,
+         GQ15_lambda_pbias = (exp(GQ15_lambda) - lambda) / lambda,
+         GQ35_lambda_pbias = (exp(GQ35_lambda) - lambda) / lambda,
+         GQ75_lambda_pbias = (exp(GQ75_lambda) - lambda) / lambda,
+         GQ105_lambda_pbias = (exp(GQ105_lambda) - lambda) / lambda,
+         GQ15_p_pbias = (exp(GQ15_p) - p) / p,
+         GQ35_p_pbias = (exp(GQ35_p) - p) / p,
+         GQ75_p_pbias = (exp(GQ75_p) - p) / p,
+         GQ105_p_pbias = (exp(GQ105_p) - p) / p,
+         GQ15_trt_covp = ifelse(treatment_effect >= (GQ15_trt - GQ15_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (GQ15_trt + GQ15_trt_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ35_trt_covp = ifelse(treatment_effect >= (GQ35_trt - GQ35_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (GQ35_trt + GQ35_trt_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ75_trt_covp = ifelse(treatment_effect >= (GQ75_trt - GQ75_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (GQ75_trt + GQ75_trt_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ105_trt_covp = ifelse(treatment_effect >= (GQ105_trt - GQ105_trt_se * qnorm(1 - 0.05/2)) & treatment_effect <= (GQ105_trt + GQ105_trt_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ15_sigma_covp = ifelse(log(frailty_sigma) >= (GQ15_sigma - GQ15_sigma_se * qnorm(1 - 0.05/2)) & log(frailty_sigma) <= (GQ15_sigma + GQ15_sigma_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ35_sigma_covp = ifelse(log(frailty_sigma) >= (GQ35_sigma - GQ35_sigma_se * qnorm(1 - 0.05/2)) & log(frailty_sigma) <= (GQ35_sigma + GQ35_sigma_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ75_sigma_covp = ifelse(log(frailty_sigma) >= (GQ75_sigma - GQ75_sigma_se * qnorm(1 - 0.05/2)) & log(frailty_sigma) <= (GQ75_sigma + GQ75_sigma_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ105_sigma_covp = ifelse(log(frailty_sigma) >= (GQ105_sigma - GQ105_sigma_se * qnorm(1 - 0.05/2)) & log(frailty_sigma) <= (GQ105_sigma + GQ105_sigma_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ15_lambda_covp = ifelse(log(lambda) >= (GQ15_lambda - GQ15_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (GQ15_lambda + GQ15_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ35_lambda_covp = ifelse(log(lambda) >= (GQ35_lambda - GQ35_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (GQ35_lambda + GQ35_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ75_lambda_covp = ifelse(log(lambda) >= (GQ75_lambda - GQ75_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (GQ75_lambda + GQ75_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ105_lambda_covp = ifelse(log(lambda) >= (GQ105_lambda - GQ105_lambda_se * qnorm(1 - 0.05/2)) & log(lambda) <= (GQ105_lambda + GQ105_lambda_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ15_p_covp = ifelse(log(p) >= (GQ15_p - GQ15_p_se * qnorm(1 - 0.05/2)) & log(p) <= (GQ15_p + GQ15_p_se * qnorm(1 - 0.05/2)), 1, 0),
+         GQ35_p_covp = ifelse(log(p) >= (GQ35_p - GQ35_p_se * qnorm(1 - 0.05/2)) & log(p) <= (GQ35_p + GQ35_p_se * qnorm(1 - 0.05/2)), 1, 0), 
+         GQ75_p_covp = ifelse(log(p) >= (GQ75_p - GQ75_p_se * qnorm(1 - 0.05/2)) & log(p) <= (GQ75_p + GQ75_p_se * qnorm(1 - 0.05/2)), 1, 0), 
+         GQ105_p_covp = ifelse(log(p) >= (GQ105_p - GQ105_p_se * qnorm(1 - 0.05/2)) & log(p) <= (GQ105_p + GQ105_p_se * qnorm(1 - 0.05/2)), 1, 0)) %>% 
+  group_by(n_individuals, n_clusters, frailty_sigma, treatment_effect, lambda, p) %>% 
+  summarise(GQ15_convp = mean(GQ15_convergence == 0, na.rm = TRUE),
+            GQ35_convp = mean(GQ35_convergence == 0, na.rm = TRUE),
+            GQ75_convp = mean(GQ75_convergence == 0, na.rm = TRUE),
+            GQ105_convp = mean(GQ105_convergence == 0, na.rm = TRUE),
+            GQ15_convn = sum(GQ15_convergence == 0, na.rm = TRUE),
+            GQ35_convn = sum(GQ35_convergence == 0, na.rm = TRUE),
+            GQ75_convn = sum(GQ75_convergence == 0, na.rm = TRUE),
+            GQ105_convn = sum(GQ105_convergence == 0, na.rm = TRUE),
+            GQ15_trt_mean = mean(GQ15_trt, na.rm = TRUE),
+            GQ35_trt_mean = mean(GQ35_trt, na.rm = TRUE),
+            GQ75_trt_mean = mean(GQ75_trt, na.rm = TRUE),
+            GQ105_trt_mean = mean(GQ105_trt, na.rm = TRUE),
+            GQ15_trt_median = median(GQ15_trt, na.rm = TRUE),
+            GQ35_trt_median = median(GQ35_trt, na.rm = TRUE),
+            GQ75_trt_median = median(GQ75_trt, na.rm = TRUE),
+            GQ105_trt_median = median(GQ105_trt, na.rm = TRUE),
+            GQ15_trt_se_mean = mean(GQ15_trt_se, na.rm = TRUE),
+            GQ35_trt_se_mean = mean(GQ35_trt_se, na.rm = TRUE),
+            GQ75_trt_se_mean = mean(GQ75_trt_se, na.rm = TRUE),
+            GQ105_trt_se_mean = mean(GQ105_trt_se, na.rm = TRUE),
+            GQ15_trt_se_median = median(GQ15_trt_se, na.rm = TRUE),
+            GQ35_trt_se_median = median(GQ35_trt_se, na.rm = TRUE),
+            GQ75_trt_se_median = median(GQ75_trt_se, na.rm = TRUE),
+            GQ105_trt_se_median = median(GQ105_trt_se, na.rm = TRUE),
+            GQ15_trt_empse = sqrt((1 / (n() - 1)) * sum((GQ15_trt - GQ15_trt_mean) ^ 2, na.rm = TRUE)),
+            GQ35_trt_empse = sqrt((1 / (n() - 1)) * sum((GQ35_trt - GQ35_trt_mean) ^ 2, na.rm = TRUE)),
+            GQ75_trt_empse = sqrt((1 / (n() - 1)) * sum((GQ75_trt - GQ75_trt_mean) ^ 2, na.rm = TRUE)),
+            GQ105_trt_empse = sqrt((1 / (n() - 1)) * sum((GQ105_trt - GQ105_trt_mean) ^ 2, na.rm = TRUE)),
+            GQ15_trt_bias = mean(GQ15_trt_bias, na.rm = TRUE),
+            GQ35_trt_bias = mean(GQ35_trt_bias, na.rm = TRUE),
+            GQ75_trt_bias = mean(GQ75_trt_bias, na.rm = TRUE),
+            GQ105_trt_bias = mean(GQ105_trt_bias, na.rm = TRUE),
+            GQ15_trt_pbias = mean(GQ15_trt_pbias, na.rm = TRUE),
+            GQ35_trt_pbias = mean(GQ35_trt_pbias, na.rm = TRUE),
+            GQ75_trt_pbias = mean(GQ75_trt_pbias, na.rm = TRUE),
+            GQ105_trt_pbias = mean(GQ105_trt_pbias, na.rm = TRUE),
+            GQ15_trt_covp = mean(GQ15_trt_covp, na.rm = TRUE),
+            GQ35_trt_covp = mean(GQ35_trt_covp, na.rm = TRUE),
+            GQ75_trt_covp = mean(GQ75_trt_covp, na.rm = TRUE),
+            GQ105_trt_covp = mean(GQ105_trt_covp, na.rm = TRUE),
+            GQ15_sigma_mean = mean(GQ15_sigma, na.rm = TRUE),
+            GQ35_sigma_mean = mean(GQ35_sigma, na.rm = TRUE),
+            GQ75_sigma_mean = mean(GQ75_sigma, na.rm = TRUE),
+            GQ105_sigma_mean = mean(GQ105_sigma, na.rm = TRUE),
+            GQ15_sigma_median = median(GQ15_sigma, na.rm = TRUE),
+            GQ35_sigma_median = median(GQ35_sigma, na.rm = TRUE),
+            GQ75_sigma_median = median(GQ75_sigma, na.rm = TRUE),
+            GQ105_sigma_median = median(GQ105_sigma, na.rm = TRUE),
+            GQ15_sigma_se_mean = mean(GQ15_sigma_se, na.rm = TRUE),
+            GQ35_sigma_se_mean = mean(GQ35_sigma_se, na.rm = TRUE),
+            GQ75_sigma_se_mean = mean(GQ75_sigma_se, na.rm = TRUE),
+            GQ105_sigma_se_mean = mean(GQ105_sigma_se, na.rm = TRUE),
+            GQ15_sigma_se_median = median(GQ15_sigma_se, na.rm = TRUE),
+            GQ35_sigma_se_median = median(GQ35_sigma_se, na.rm = TRUE),
+            GQ75_sigma_se_median = median(GQ75_sigma_se, na.rm = TRUE),
+            GQ105_sigma_se_median = median(GQ105_sigma_se, na.rm = TRUE),
+            GQ15_sigma_empse = sqrt((1 / (n() - 1)) * sum((GQ15_sigma - GQ15_sigma_mean) ^ 2, na.rm = TRUE)),
+            GQ35_sigma_empse = sqrt((1 / (n() - 1)) * sum((GQ35_sigma - GQ35_sigma_mean) ^ 2, na.rm = TRUE)),
+            GQ75_sigma_empse = sqrt((1 / (n() - 1)) * sum((GQ75_sigma - GQ75_sigma_mean) ^ 2, na.rm = TRUE)),
+            GQ105_sigma_empse = sqrt((1 / (n() - 1)) * sum((GQ105_sigma - GQ105_sigma_mean) ^ 2, na.rm = TRUE)),
+            GQ15_sigma_bias = mean(GQ15_sigma_bias, na.rm = TRUE),
+            GQ35_sigma_bias = mean(GQ35_sigma_bias, na.rm = TRUE),
+            GQ75_sigma_bias = mean(GQ75_sigma_bias, na.rm = TRUE),
+            GQ105_sigma_bias = mean(GQ105_sigma_bias, na.rm = TRUE),
+            GQ15_sigma_pbias = mean(GQ15_sigma_pbias, na.rm = TRUE),
+            GQ35_sigma_pbias = mean(GQ35_sigma_pbias, na.rm = TRUE),
+            GQ75_sigma_pbias = mean(GQ75_sigma_pbias, na.rm = TRUE),
+            GQ105_sigma_pbias = mean(GQ105_sigma_pbias, na.rm = TRUE),
+            GQ15_sigma_covp = mean(GQ15_sigma_covp, na.rm = TRUE),
+            GQ35_sigma_covp = mean(GQ35_sigma_covp, na.rm = TRUE),
+            GQ75_sigma_covp = mean(GQ75_sigma_covp, na.rm = TRUE),
+            GQ105_sigma_covp = mean(GQ105_sigma_covp, na.rm = TRUE),
+            GQ15_lambda_mean = mean(GQ15_lambda, na.rm = TRUE),
+            GQ35_lambda_mean = mean(GQ35_lambda, na.rm = TRUE),
+            GQ75_lambda_mean = mean(GQ75_lambda, na.rm = TRUE),
+            GQ105_lambda_mean = mean(GQ105_lambda, na.rm = TRUE),
+            GQ15_lambda_median = median(GQ15_lambda, na.rm = TRUE),
+            GQ35_lambda_median = median(GQ35_lambda, na.rm = TRUE),
+            GQ75_lambda_median = median(GQ75_lambda, na.rm = TRUE),
+            GQ105_lambda_median = median(GQ105_lambda, na.rm = TRUE),
+            GQ15_lambda_se_mean = mean(GQ15_lambda_se, na.rm = TRUE),
+            GQ35_lambda_se_mean = mean(GQ35_lambda_se, na.rm = TRUE),
+            GQ75_lambda_se_mean = mean(GQ75_lambda_se, na.rm = TRUE),
+            GQ105_lambda_se_mean = mean(GQ105_lambda_se, na.rm = TRUE),
+            GQ15_lambda_se_median = median(GQ15_lambda_se, na.rm = TRUE),
+            GQ35_lambda_se_median = median(GQ35_lambda_se, na.rm = TRUE),
+            GQ75_lambda_se_median = median(GQ75_lambda_se, na.rm = TRUE),
+            GQ105_lambda_se_median = median(GQ105_lambda_se, na.rm = TRUE),
+            GQ15_lambda_empse = sqrt((1 / (n() - 1)) * sum((GQ15_lambda - GQ15_lambda_mean) ^ 2, na.rm = TRUE)),
+            GQ35_lambda_empse = sqrt((1 / (n() - 1)) * sum((GQ35_lambda - GQ35_lambda_mean) ^ 2, na.rm = TRUE)),
+            GQ75_lambda_empse = sqrt((1 / (n() - 1)) * sum((GQ75_lambda - GQ75_lambda_mean) ^ 2, na.rm = TRUE)),
+            GQ105_lambda_empse = sqrt((1 / (n() - 1)) * sum((GQ105_lambda - GQ105_lambda_mean) ^ 2, na.rm = TRUE)),
+            GQ15_lambda_bias = mean(GQ15_lambda_bias, na.rm = TRUE),
+            GQ35_lambda_bias = mean(GQ35_lambda_bias, na.rm = TRUE),
+            GQ75_lambda_bias = mean(GQ75_lambda_bias, na.rm = TRUE),
+            GQ105_lambda_bias = mean(GQ105_lambda_bias, na.rm = TRUE),
+            GQ15_lambda_pbias = mean(GQ15_lambda_pbias, na.rm = TRUE),
+            GQ35_lambda_pbias = mean(GQ35_lambda_pbias, na.rm = TRUE),
+            GQ75_lambda_pbias = mean(GQ75_lambda_pbias, na.rm = TRUE),
+            GQ105_lambda_pbias = mean(GQ105_lambda_pbias, na.rm = TRUE),
+            GQ15_lambda_covp = mean(GQ15_lambda_covp, na.rm = TRUE),
+            GQ35_lambda_covp = mean(GQ35_lambda_covp, na.rm = TRUE),
+            GQ75_lambda_covp = mean(GQ75_lambda_covp, na.rm = TRUE),
+            GQ105_lambda_covp = mean(GQ105_lambda_covp, na.rm = TRUE),
+            GQ15_p_mean = mean(GQ15_p, na.rm = TRUE),
+            GQ35_p_mean = mean(GQ35_p, na.rm = TRUE),
+            GQ75_p_mean = mean(GQ75_p, na.rm = TRUE),
+            GQ105_p_mean = mean(GQ105_p, na.rm = TRUE),
+            GQ15_p_median = median(GQ15_p, na.rm = TRUE),
+            GQ35_p_median = median(GQ35_p, na.rm = TRUE),
+            GQ75_p_median = median(GQ75_p, na.rm = TRUE),
+            GQ105_p_median = median(GQ105_p, na.rm = TRUE),
+            GQ15_p_se_mean = mean(GQ15_p_se, na.rm = TRUE),
+            GQ35_p_se_mean = mean(GQ35_p_se, na.rm = TRUE),
+            GQ75_p_se_mean = mean(GQ75_p_se, na.rm = TRUE),
+            G105Q_p_se_mean = mean(GQ105_p_se, na.rm = TRUE),
+            GQ15_p_se_median = median(GQ15_p_se, na.rm = TRUE),
+            GQ35_p_se_median = median(GQ35_p_se, na.rm = TRUE),
+            GQ75_p_se_median = median(GQ75_p_se, na.rm = TRUE),
+            GQ105_p_se_median = median(GQ105_p_se, na.rm = TRUE),
+            GQ15_p_empse = sqrt((1 / (n() - 1)) * sum((GQ15_p - GQ15_p_mean) ^ 2, na.rm = TRUE)),
+            GQ35_p_empse = sqrt((1 / (n() - 1)) * sum((GQ35_p - GQ35_p_mean) ^ 2, na.rm = TRUE)),
+            GQ75_p_empse = sqrt((1 / (n() - 1)) * sum((GQ75_p - GQ75_p_mean) ^ 2, na.rm = TRUE)),
+            GQ105_p_empse = sqrt((1 / (n() - 1)) * sum((GQ105_p - GQ105_p_mean) ^ 2, na.rm = TRUE)),
+            GQ15_p_bias = mean(GQ15_p_bias, na.rm = TRUE),
+            GQ35_p_bias = mean(GQ35_p_bias, na.rm = TRUE),
+            GQ75_p_bias = mean(GQ75_p_bias, na.rm = TRUE),
+            GQ105_p_bias = mean(GQ105_p_bias, na.rm = TRUE),
+            GQ15_p_pbias = mean(GQ15_p_pbias, na.rm = TRUE),
+            GQ35_p_pbias = mean(GQ35_p_pbias, na.rm = TRUE),
+            GQ75_p_pbias = mean(GQ75_p_pbias, na.rm = TRUE),
+            GQ105_p_pbias = mean(GQ105_p_pbias, na.rm = TRUE),
+            GQ15_p_covp = mean(GQ15_p_covp, na.rm = TRUE), 
+            GQ35_p_covp = mean(GQ35_p_covp, na.rm = TRUE), 
+            GQ75_p_covp = mean(GQ75_p_covp, na.rm = TRUE), 
+            GQ105_p_covp = mean(GQ105_p_covp, na.rm = TRUE)) %>% 
+  mutate(GQ15_trt_mse = GQ15_trt_bias ^ 2 + GQ15_trt_empse ^ 2,
+         GQ35_trt_mse = GQ35_trt_bias ^ 2 + GQ35_trt_empse ^ 2,
+         GQ75_trt_mse = GQ75_trt_bias ^ 2 + GQ75_trt_empse ^ 2,
+         GQ105_trt_mse = GQ105_trt_bias ^ 2 + GQ105_trt_empse ^ 2,
+         GQ15_sigma_mse = GQ15_sigma_bias ^ 2 + GQ15_sigma_empse ^ 2,
+         GQ35_sigma_mse = GQ35_sigma_bias ^ 2 + GQ35_sigma_empse ^ 2,
+         GQ75_sigma_mse = GQ75_sigma_bias ^ 2 + GQ75_sigma_empse ^ 2,
+         GQ105_sigma_mse = GQ105_sigma_bias ^ 2 + GQ105_sigma_empse ^ 2,
+         GQ15_lambda_mse = GQ15_lambda_bias ^ 2 + GQ15_lambda_empse ^ 2,
+         GQ35_lambda_mse = GQ35_lambda_bias ^ 2 + GQ35_lambda_empse ^ 2,
+         GQ75_lambda_mse = GQ75_lambda_bias ^ 2 + GQ75_lambda_empse ^ 2,
+         GQ105_lambda_mse = GQ105_lambda_bias ^ 2 + GQ105_lambda_empse ^ 2,
+         GQ15_p_mse = GQ15_p_bias ^ 2 + GQ15_p_empse ^ 2,
+         GQ35_p_mse = GQ35_p_bias ^ 2 + GQ35_p_empse ^ 2,
+         GQ75_p_mse = GQ75_p_bias ^ 2 + GQ75_p_empse ^ 2,
+         GQ105_p_mse = GQ105_p_bias ^ 2 + GQ105_p_empse ^ 2)
+
+saveRDS(s_normal_gq_summary, "SiReX/s_normal_gq_summary.RDS")
+
+r_normal_gq <- s_normal_gq_summary %>%
+  gather(key = key, value = value, 7:158) %>%
+  separate(key, c("method", "name", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), name, stat),
+         method = factor(method, levels = c("GQ15", "GQ35", "GQ75", "GQ105")))
 ```
 
 ### Convergence
@@ -1095,222 +1295,164 @@ Number of simulations converging:
 
 ```{r}
 # By n_individuals:
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^convn", stat)) %>%
-  ggplot(aes(x = factor(n_individuals), y = value)) +
+  ggplot(aes(x = factor(n_individuals), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
-  labs(x = "N. of individuals per cluster", y = "N. of simulations converging")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "N. of individuals per cluster", y = "N. of simulations converging", color = "")
 
 # By n_clusters:
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^convn", stat)) %>%
-  ggplot(aes(x = factor(n_clusters), y = value)) +
+  ggplot(aes(x = factor(n_clusters), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
-  labs(x = "N. of clusters", y = "N. of simulations converging")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "N. of clusters", y = "N. of simulations converging", color = "")
 
 # By n_individuals x n_clusters
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^convn", stat)) %>%
   rename(`N. ind` = n_individuals, `N. clusters` = n_clusters) %>% 
-  ggplot(aes(x = 1, y = value)) +
+  ggplot(aes(x = method, y = value)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
   facet_grid(`N. clusters` ~ `N. ind` , labeller = label_both) +
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
   labs(x = "", y = "N. of simulations converging")
 
 # By treatment_effect:
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^convn", stat)) %>%
-  ggplot(aes(x = factor(treatment_effect), y = value)) +
+  ggplot(aes(x = factor(treatment_effect), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
-  labs(x = "Treatment effect", y = "N. of simulations converging")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "Treatment effect", y = "N. of simulations converging", color = "")
 
 # By frailty_sigma:
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^convn", stat)) %>%
-  ggplot(aes(x = factor(frailty_sigma), y = value)) +
+  ggplot(aes(x = factor(frailty_sigma), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
-  labs(x = "Frailty variance", y = "N. of simulations converging")
-
-# By ngh:
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^convn", stat)) %>%
-  ggplot(aes(x = factor(ngh), y = value)) +
-  geom_jitter(height = 0) + 
-  geom_boxplot(alpha = 3/4) + 
-  scale_y_continuous(labels = scales::comma) +
-  theme_bw() + 
-  labs(x = "Gauss-Hermite knots", y = "N. of simulations converging")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "Frailty variance", y = "N. of simulations converging", color = "")
 ```
 
 Proportion of simulations converging:
 
 ```{r}
 # By n_individuals:
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^convp", stat)) %>%
-  ggplot(aes(x = factor(n_individuals), y = value)) +
+  ggplot(aes(x = factor(n_individuals), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
-  labs(x = "N. of individuals per cluster", y = "P. of simulations converging")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "N. of individuals per cluster", y = "P. of simulations converging", color = "")
 
 # By n_clusters:
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^convp", stat)) %>%
-  ggplot(aes(x = factor(n_clusters), y = value)) +
+  ggplot(aes(x = factor(n_clusters), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
-  labs(x = "N. of clusters", y = "P. of simulations converging")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "N. of clusters", y = "P. of simulations converging", color = "")
 
 # By n_individuals x n_clusters
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^convp", stat)) %>%
   rename(`N. ind` = n_individuals, `N. clusters` = n_clusters) %>% 
-  ggplot(aes(x = 1, y = value)) +
+  ggplot(aes(x = method, y = value)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
   facet_grid(`N. clusters` ~ `N. ind` , labeller = label_both) +
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-  labs(x = "", y = "N. of simulations converging")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "P. of simulations converging")
 
 # By treatment_effect:
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^convp", stat)) %>%
-  ggplot(aes(x = factor(treatment_effect), y = value)) +
+  ggplot(aes(x = factor(treatment_effect), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
-  labs(x = "Treatment effect", y = "P. of simulations converging")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "Treatment effect", y = "P. of simulations converging", color = "")
 
 # By frailty_sigma:
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^convp", stat)) %>%
-  ggplot(aes(x = factor(frailty_sigma), y = value)) +
+  ggplot(aes(x = factor(frailty_sigma), y = value, color = method)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() + 
-  labs(x = "Frailty variance", y = "P. of simulations converging")
-
-# By ngh:
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^convp", stat)) %>%
-  ggplot(aes(x = factor(ngh), y = value)) +
-  geom_jitter(height = 0) + 
-  geom_boxplot(alpha = 3/4) + 
-  scale_y_continuous(labels = scales::comma) +
-  theme_bw() + 
-  labs(x = "Gauss-Hermite knots", y = "P. of simulations converging")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "Frailty variance", y = "P. of simulations converging", color = "")
 ```
 
 ### Estimated values
 
-Average estimates:
+Average values:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat),
-         scenario = factor(paste0("Fr. variance: ", frailty_sigma, "; tr. effect: ", treatment_effect))) %>% 
-  filter(grepl("^mean", stat)) %>%
+r_normal_gq %>% 
+  filter(grepl("^mean", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value, color = scenario)) +
+  ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   theme_bw() + 
-  labs(x = "", y = "Estimates (Mean)", color = "Sim. scenario")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Estimates (Mean)", color = "")
 ```
 
-Median estimates:
+Median values:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat),
-         scenario = factor(paste0("Fr. variance: ", frailty_sigma, "; tr. effect: ", treatment_effect))) %>% 
-  filter(grepl("^median", stat)) %>%
+r_normal_gq %>% 
+  filter(grepl("^median", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value, color = scenario)) +
+  ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   theme_bw() + 
-  labs(x = "", y = "Estimates (Median)", color = "Sim. scenario")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Estimates (Median)", color = "")
 ```
 
 ### Bias
@@ -1318,139 +1460,194 @@ s_normal_gq_summary %>%
 Overall:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^bias", stat)) %>%
+r_normal_gq %>% 
+  filter(grepl("^bias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
-  geom_jitter(height = 0) + 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   theme_bw() + 
-  labs(x = "", y = "Bias")
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
 ```
 
 Bias by treatment effect:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^bias", stat)) %>%
+r_normal_gq %>% 
+  filter(grepl("^bias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
-  geom_jitter(height = 0) + 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   facet_wrap(~ treatment_effect) +
   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "", y = "Bias")
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
 ```
 
 Bias by frailty variance:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^bias", stat)) %>%
+r_normal_gq %>% 
+  filter(grepl("^bias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
-  geom_jitter(height = 0) + 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   facet_wrap(~ frailty_sigma) +
   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "", y = "Bias")
-```
-
-Bias by number of quadrature nodes:
-
-```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^bias", stat)) %>%
-  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
-  geom_jitter(height = 0) + 
-  geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
-  facet_wrap(~ ngh) +
-  theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "", y = "Bias")
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
 ```
 
 Bias by number of clusters:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^bias", stat)) %>%
+r_normal_gq %>% 
+  filter(grepl("^bias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
-  geom_jitter(height = 0) + 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   facet_wrap(~ n_clusters) +
   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "", y = "Bias")
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
 ```
 
 Bias by number of individuals:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^bias", stat)) %>%
+r_normal_gq %>% 
+  filter(grepl("^bias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
-  geom_jitter(height = 0) + 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   facet_wrap(~ n_individuals) +
   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "", y = "Bias")
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
 ```
 
 Bias by number of clusters and number of individuals:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^bias", stat)) %>%
+r_normal_gq %>% 
+  filter(grepl("^bias", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
-  geom_jitter(height = 0) + 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   facet_grid(n_individuals ~ n_clusters) +
   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "", y = "Bias")
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Bias", color = "")
+```
+
+### Percentage bias
+
+Overall:
+
+```{r}
+r_normal_gq %>% 
+  filter(grepl("^pbias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>%
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Percentage bias", color = "")
+```
+
+Percentage bias by treatment effect:
+
+```{r}
+r_normal_gq %>% 
+  filter(grepl("^pbias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  facet_wrap(~ treatment_effect) +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Percentage bias", color = "")
+```
+
+Percentage bias by frailty variance:
+
+```{r}
+r_normal_gq %>% 
+  filter(grepl("^pbias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  facet_wrap(~ frailty_sigma) +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Percentage bias", color = "")
+```
+
+Percentage bias by number of clusters:
+
+```{r}
+r_normal_gq %>% 
+  filter(grepl("^pbias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  facet_wrap(~ n_clusters) +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Percentage bias", color = "")
+```
+
+Percentage bias by number of individuals:
+
+```{r}
+r_normal_gq %>% 
+  filter(grepl("^pbias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  facet_wrap(~ n_individuals) +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Percentage bias", color = "")
+```
+
+Percentage bias by number of clusters and number of individuals:
+
+```{r}
+r_normal_gq %>% 
+  filter(grepl("^pbias", stat)) %>% 
+  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
+  ggplot(aes(x = method, y = value, color = name)) +
+  geom_jitter(height = 0, alpha = 3/4) + 
+  geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
+  facet_grid(n_individuals ~ n_clusters) +
+  theme_bw() + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Percentage bias", color = "")
 ```
 
 ### Coverage probability
@@ -1458,146 +1655,102 @@ s_normal_gq_summary %>%
 Overall:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^covp", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
+  ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
   theme_bw() + 
-  labs(x = "", y = "Coverage probability")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
 ```
 
 Coverage probability by treatment effect:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^covp", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
+  ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
   facet_wrap(~ treatment_effect) +
   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "", y = "Coverage probability")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
 ```
 
 Coverage probability by frailty variance:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^covp", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
+  ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
   facet_wrap(~ frailty_sigma) +
   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "", y = "Coverage probability")
-```
-
-Coverage probability by number of quadrature nodes:
-
-```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
-  filter(grepl("^covp", stat)) %>% 
-  mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
-  geom_jitter(height = 0) + 
-  geom_boxplot(alpha = 3/4) + 
-  scale_y_continuous(labels = scales::percent) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
-  facet_wrap(~ ngh) +
-  theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "", y = "Coverage probability")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
 ```
 
 Coverage probability by number of clusters:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^covp", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
+  ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
   facet_wrap(~ n_clusters) +
   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "", y = "Coverage probability")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
 ```
 
 Coverage probability by number of individuals:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^covp", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
+  ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
   facet_wrap(~ n_individuals) +
   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "", y = "Coverage probability")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
 ```
 
 Coverage probability by number of clusters and number of individuals:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat)) %>% 
+r_normal_gq %>% 
   filter(grepl("^covp", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value)) +
+  ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
+  scale_color_colorblind() +
   scale_y_continuous(labels = scales::percent) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
   facet_grid(n_individuals ~ n_clusters) +
   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "", y = "Coverage probability")
+  theme(legend.position = c(0, 0), legend.justification = c(0, 0), legend.background = element_blank()) + 
+  labs(x = "", y = "Coverage probability", color = "")
 ```
 
 ### Standard errors
@@ -1605,77 +1758,65 @@ s_normal_gq_summary %>%
 Average standard errors:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat),
-         scenario = factor(paste0("Fr. variance: ", frailty_sigma, "; tr. effect: ", treatment_effect))) %>% 
-  filter(grepl("^se_mean", stat)) %>%
+r_normal_gq %>% 
+  filter(grepl("^se_mean", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value, color = scenario)) +
+  ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::comma) + 
   theme_bw() + 
-  labs(x = "", y = "SE (Mean)", color = "Sim. scenario")
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "SE (Mean)", color = "")
 ```
 
 Median standard errors:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat),
-         scenario = factor(paste0("Fr. variance: ", frailty_sigma, "; tr. effect: ", treatment_effect))) %>% 
-  filter(grepl("^se_median", stat)) %>%
+r_normal_gq %>% 
+  filter(grepl("^se_median", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value, color = scenario)) +
+  ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::comma) + 
   theme_bw() + 
-  labs(x = "", y = "SE (Median)", color = "Sim. scenario")
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "SE (Median)", color = "")
 ```
 
 Empirical standard errors:
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat),
-         scenario = factor(paste0("Fr. variance: ", frailty_sigma, "; tr. effect: ", treatment_effect))) %>% 
-  filter(grepl("^empse", stat)) %>%
+r_normal_gq %>% 
+  filter(grepl("^empse", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value, color = scenario)) +
+  ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::comma) + 
   theme_bw() + 
-  labs(x = "", y = "Empirical SE", color = "Sim. scenario")
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "Empirical SE", color = "")
 ```
 
 ### Mean square error
 
 ```{r}
-s_normal_gq_summary %>%
-  gather(key = key, value = value, 8:41) %>%
-  mutate(par = str_sub(key, 4, str_length(key))) %>%
-  separate(par, c("name", "stat"), sep = "_", extra = "merge") %>%
-  mutate(stat = ifelse(is.na(stat), name, stat),
-         scenario = factor(paste0("Fr. variance: ", frailty_sigma, "; tr. effect: ", treatment_effect))) %>% 
-  filter(grepl("^mse", stat)) %>%
+r_normal_gq %>% 
+  filter(grepl("^mse", stat)) %>% 
   mutate(name = factor(name, levels = c("trt", "sigma", "lambda", "p"), labels = c("Treatment effect", "Frailty variance", "Lambda", "P"))) %>% 
-  ggplot(aes(x = name, y = value, color = scenario)) +
+  ggplot(aes(x = method, y = value, color = name)) +
   geom_jitter(height = 0) + 
   geom_boxplot(alpha = 3/4) + 
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
+  scale_y_continuous(labels = scales::comma) + 
   theme_bw() + 
-  labs(x = "", y = "MSE", color = "Sim. scenario")
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.background = element_blank()) + 
+  labs(x = "", y = "MSE", color = "")
 ```
 
 ## Application to catheter data
@@ -1685,11 +1826,12 @@ catheter <- read_csv("catheter.csv", col_types = "ddddd____")
 glimpse(catheter)
 ```
 
-First, we estimate the effect of age and gender on the risk of infection using a Weibull survival model with a Gamma frailty.
+First, we estimate the effect of age and gender on the risk of infection using a Weibull survival model with a Gamma frailty. We model age per 10-years changes.
 
 We will use the following starting values:
 
 ```{r}
+catheter$age <- catheter$age / 10
 sr <- survival::survreg(survival::Surv(time, infect) ~ age + female, dist = "weibull", data = catheter)
 start <- c(log(1 / sr$scale), # p
            log(exp(sr$coef[1]) ^ (-1 / sr$scale)), # lambda
@@ -1702,8 +1844,8 @@ start
 
 Maximising the likelihood using analytical formulae:
 
-```{r}
-mll = function(pars) {
+```{r, echo = T}
+mll <- function(pars) {
   p = exp(pars[1])
   lambda = exp(pars[2])
   theta = exp(pars[3])
@@ -1721,16 +1863,17 @@ mll = function(pars) {
   ll = sum(lli)
   return(-ll)
 }
-out <- optim(fn = mll, par = start, method = "BFGS", hessian = TRUE)
-out$se <- sqrt(diag(solve(out$hessian)))
-out
+out <- optim(fn = mll, par = start, hessian = T, method = "BFGS")
+out$se = sqrt(diag(solve(out$hessian)))
+```
 
+```{r}
 all_res <- data.frame(par = names(out$par), est = out$par, se = out$se, lower = out$par - qnorm(1 - 0.05 / 2) * out$se, upper = out$par + qnorm(1 - 0.05 / 2) * out$se, what = "AF")
 ```
 
 Maximising the likelihood using Gauss-Laguerre quadrature with 15 nodes:
 
-```{r}
+```{r, echo = T}
 gl_rule = gaussLaguerre(15)
 mll_quad = function(pars) {
   p = exp(pars[1])
@@ -1752,18 +1895,84 @@ mll_quad = function(pars) {
   ll = sum(lli)
   return(-ll)
 }
-out_quad <- optim(fn = mll_quad, par = start, method = "BFGS", hessian = TRUE)
+out_quad <- optim(fn = mll_quad, par = start, hessian = T, method = "BFGS")
 out_quad$se <- sqrt(diag(solve(out_quad$hessian)))
-out_quad
+```
 
+```{r}
 all_res <- bind_rows(all_res,
-                     data.frame(par = names(out_quad$par), est = out_quad$par, se = out_quad$se, lower = out_quad$par - qnorm(1 - 0.05 / 2) * out_quad$se, upper = out_quad$par + qnorm(1 - 0.05 / 2) * out_quad$se, what = "GQ"))
+                     data.frame(par = names(out_quad$par), est = out_quad$par, se = out_quad$se, lower = out_quad$par - qnorm(1 - 0.05 / 2) * out_quad$se, upper = out_quad$par + qnorm(1 - 0.05 / 2) * out_quad$se, what = "GQ15"))
+```
+
+Maximising the likelihood using Gauss-Laguerre quadrature with 35 nodes:
+
+```{r, echo = T}
+gl_rule = gaussLaguerre(35)
+mll_quad2 = function(pars) {
+  p = exp(pars[1])
+  lambda = exp(pars[2])
+  theta = exp(pars[3])
+  beta1 = pars[4]
+  beta2 = pars[5]
+  lli = vapply(1:max(catheter$patient),
+               FUN = function(i) {
+                 log_hi = log(p) + log(lambda) + (p - 1) * log(catheter$time[catheter$patient == i]) + (catheter$age[catheter$patient == i] * beta1 + catheter$female[catheter$patient == i] * beta2)
+                 log_Si = -lambda * catheter$time[catheter$patient == i] ^ p * exp(catheter$age[catheter$patient == i] * beta1 + catheter$female[catheter$patient == i] * beta2)
+                 Di = sum(catheter$infect[catheter$patient == i])
+                 intgrdq = function(alpha) exp(alpha + Di * log(alpha) + alpha * sum(log_Si) + (1 / theta - 1) * log(alpha) - alpha / theta)
+                 vintgrdq = Vectorize(intgrdq)
+                 int = sum(gl_rule$w * vintgrdq(gl_rule$x))
+                 ll = sum(catheter$infect[catheter$patient == i] * (log_hi)) - lgamma(1 / theta) - (1 / theta) * log(theta) + log(int) + sum(log(catheter$time[catheter$patient == i]))
+                 return(ll)},
+               FUN.VALUE = numeric(1))
+  ll = sum(lli)
+  return(-ll)
+}
+out_quad2 <- optim(fn = mll_quad2, par = start, hessian = T, method = "BFGS")
+out_quad2$se <- sqrt(diag(solve(out_quad2$hessian)))
+```
+
+```{r}
+all_res <- bind_rows(all_res,
+                     data.frame(par = names(out_quad2$par), est = out_quad2$par, se = out_quad2$se, lower = out_quad2$par - qnorm(1 - 0.05 / 2) * out_quad2$se, upper = out_quad2$par + qnorm(1 - 0.05 / 2) * out_quad2$se, what = "GQ35"))
+```
+
+Maximising the likelihood using Gauss-Kronrod quadrature rule (R's `integrate()`):
+
+```{r, echo = T}
+mll_int = function(pars) {
+  p = exp(pars[1])
+  lambda = exp(pars[2])
+  theta = exp(pars[3])
+  beta1 = pars[4]
+  beta2 = pars[5]
+  lli = vapply(1:max(catheter$patient),
+               FUN = function(i) {
+                 log_hi = log(p) + log(lambda) + (p - 1) * log(catheter$time[catheter$patient == i]) + (catheter$age[catheter$patient == i] * beta1 + catheter$female[catheter$patient == i] * beta2)
+                 log_Si = -lambda * catheter$time[catheter$patient == i] ^ p * exp(catheter$age[catheter$patient == i] * beta1 + catheter$female[catheter$patient == i] * beta2)
+                 Di = sum(catheter$infect[catheter$patient == i])
+                 intgrdq = function(alpha) exp(Di * log(alpha) + alpha * sum(log_Si) + (1 / theta - 1) * log(alpha) - alpha / theta)
+                 vintgrdq = Vectorize(intgrdq)
+                 int = integrate(vintgrdq, lower = 0, upper = Inf)$value
+                 ll = sum(catheter$infect[catheter$patient == i] * (log_hi)) - lgamma(1 / theta) - (1 / theta) * log(theta) + log(int) + sum(log(catheter$time[catheter$patient == i]))
+                 return(ll)},
+               FUN.VALUE = numeric(1))
+  ll = sum(lli)
+  return(-ll)
+}
+out_int <- optim(fn = mll_int, par = start, hessian = T, method = "BFGS")
+out_int$se <- sqrt(diag(solve(out_int$hessian)))
+```
+
+```{r}
+all_res <- bind_rows(all_res,
+                     data.frame(par = names(out_int$par), est = out_int$par, se = out_int$se, lower = out_int$par - qnorm(1 - 0.05 / 2) * out_int$se, upper = out_int$par + qnorm(1 - 0.05 / 2) * out_int$se, what = "IN"))
 ```
 
 Then, we assume a random effect (intercept). We use the same starting values, and we substitute 15-nodes Gauss-Laguerre quadrature for 15-nodes Gauss-Hermite quadrature:
 
-```{r}
-gh_rule = gaussHermiteData(35)
+```{r, echo = T}
+gh_rule = gaussHermiteData(15)
 
 mll_re = function(pars) {
   p = exp(pars[1])
@@ -1786,23 +1995,25 @@ mll_re = function(pars) {
   ll = sum(lli)
   return(-ll)
 }
-out_re <- optim(fn = mll_re, par = start, method = "BFGS", hessian = TRUE)
+out_re <- optim(fn = mll_re, par = start, hessian = T, method = "BFGS")
 out_re$se <- sqrt(diag(solve(out_re$hessian)))
-out_re
+```
 
+```{r}
 all_res <- bind_rows(all_res,
                      data.frame(par = names(out_re$par), est = out_re$par, se = out_re$se, lower = out_re$par - qnorm(1 - 0.05 / 2) * out_re$se, upper = out_re$par + qnorm(1 - 0.05 / 2) * out_re$se, what = "RE"))
 ```
 
-Comparison of results from the different models:
+Comparison of results from the different methods and models:
 
 ```{r}
 all_res %>% 
   ggplot(aes(x = par, y = est, color = what)) + 
   geom_point(position = position_dodge(0.5)) + 
   geom_errorbar(aes(ymin = lower, ymax = upper), position = position_dodge(0.5), width = 0.25) +
-  scale_color_brewer(type = "qual", palette = "Set1") + 
+  scale_color_colorblind() +
   theme_bw() + 
+  theme(legend.position = c(1, 0), legend.justification = c(1, 0), legend.background = element_blank()) +
   labs(x = "", y = "Estimate", color = "")
 ```
 
