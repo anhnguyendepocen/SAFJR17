@@ -114,11 +114,6 @@ code {
   font-family: 'Roboto Mono';
 }
 
-/* This is somehow required for knitr option 'tidy' to work :| */
-.remark-code-line {
-    white-space: normal;
-}
-
 .pull-left {
   float: left;
   width: 47.5%;

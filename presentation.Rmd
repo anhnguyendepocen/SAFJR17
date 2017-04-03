@@ -23,7 +23,7 @@ if (!requireNamespace("gganimate")) devtools::install_github("dgrtwo/gganimate")
 if (!requireNamespace("uolvid")) devtools::install_github("ellessenne/uolvid")
 
 pacman::p_load("gganimate", "ggplot2", "fastGHQuad", "dplyr", "tidyr", "knitr", "stringr", "uolvid")
-opts_chunk$set(echo = FALSE, dpi = 300, message = FALSE, warning = FALSE)
+opts_chunk$set(echo = FALSE, dpi = 300, message = FALSE, warning = FALSE, tidy = FALSE)
 ```
 
 # Outline
@@ -96,6 +96,14 @@ Joint model likelihood: integral of survival submodel P(T_i, d_i) x mixed model 
 
 Examples: healthcare data with multiple, itermittently observed biomarkers, dynamic prediction models, accounting for measurement error, ... 
 
+--
+
+* ...
+
+???
+
+Flexible parametric survival models with frailties or random effects, GLMMs, ...
+
 ---
 # Estimation options
 
@@ -129,6 +137,8 @@ The EM method requires effort in coding the E-M steps; in the E-step, the unknow
 
 If closed-form MLEs are not available for a model but the (log-)likelihood can easily be evaluated, one should, before doing anything more sophisticated, simply use a general-purpose numerical optimiser in an attempt to maximise that likelihood, subject to any constraints that there may be on parameters. If that succeeds, there will be no need to derive and code the E and M steps in order to implement the EM algorithm.
 
+Let's go back for a second to the likelihood of a JM: if we want to evaluate the likelihood, we need to find a way to approximate the integral for which there is no closed form solution
+
 ---
 # Gaussian quadrature
 
@@ -138,7 +148,7 @@ If closed-form MLEs are not available for a model but the (log-)likelihood can e
 
 n-point Gaussian quadrature rule: 
 
-$$\int_{-1} ^ {+1} f(x) \ dx = \sum_{i = 1} ^ n w_i f(x_i)$$
+$$\int_X f(x) \ dx = \sum_{i = 1} ^ n w_i f(x_i)$$
 ???
 
 n-point Gaussian quadrature rule yields an exact approximation for polynomials of degree 2n - 1 or less
@@ -147,15 +157,20 @@ n-point Gaussian quadrature rule yields an exact approximation for polynomials o
 
 If we rewrite $f(x)$ as $f(x)=\omega(x)g(x)$, weights and nodes $w_i'$ and $x_i'$ that depend on $\omega(x)$ may give better results:
 
-$$\int_{-1} ^ {+1} f(x) \ dx = \int_{-1} ^ {+1} \omega(x)g(x) \ dx = \sum_{i = 1} ^ n w_i' g(x_i')$$
+$$\int_X f(x) \ dx = \int_X \omega(x)g(x) \ dx = \sum_{i = 1} ^ n w_i' g(x_i')$$
 
 A commonly used weighting function is $\omega(x) = e ^ {- x ^ 2}$, which yields the so-called Gauss-Hermite quadrature rule.
 
 ???
+
 g(x) approximately polynomial
 omega(x) known
 w_i: weights
 x_i: nodes
+
+--
+
+Alternatives: adaptive quadrature rules, Monte-Carlo integration (and importance sampling), Bayesian quadrature, ...
 
 ---
 class: center, middle
@@ -211,7 +226,7 @@ $$L_i = \int L_i(\alpha_i) g(\alpha_i) \ d \alpha_i$$
 ---
 # Simulation scenarios
 
-* Weibull baseline hazard with shape p = 0.5, scale &lambda; = 1, and Gamma frailty;
+* Weibull baseline hazard with shape p = 0.5, scale &lambda; = 1, and shared Gamma-distributed frailty term;
 
 --
 
@@ -219,11 +234,15 @@ $$L_i = \int L_i(\alpha_i) g(\alpha_i) \ d \alpha_i$$
 
 --
 
-* number of clusters: {15, 30, 100, 200}, number of individuals per cluster: {25, 50, 100, 250, 500, 1000};
+* number of clusters: {25, 50, 100, 200}, number of individuals per cluster: {25, 50, 100, 250, 500, 1000};
 
 --
 
 * treatment effect: {-0.50, 0.00, 0.50};
+
+???
+
+i.e. log(HR)
 
 --
 
@@ -274,7 +293,7 @@ p(b_i) is the normal density for the random effects
 
 --
 
-* number of clusters: {15, 30, 100, 200}, number of individuals per cluster: {25, 50, 100, 250, 500, 1000};
+* number of clusters: {25, 50, 100, 200}, number of individuals per cluster: {25, 50, 100, 250, 500, 1000};
 
 --
 
@@ -299,38 +318,97 @@ count: false
 # A quick R example 
 
 ---
-# A quick R example
+# Dataset
 
-Compute nodes and weights:
+Data on the recurrence times to infection, at the point of insertion of the catheter, for kidney patients using portable dialysis equipment<sup>+</sup>.footnote[<sup>+</sup>McGilchrist and Aisbett, 1991.]. Catheters may be removed for reasons other than infection, in which case the observation is censored. Each patient has exactly 2 observations.
 
-```{r, eval = FALSE, echo = TRUE, tidy = TRUE}
-# library(fastGHQuad)
-nodes <- 35
-gh_rule <- gaussHermiteData(nodes)
+```{r, echo = TRUE}
+data(kidney, package = "survival")
+str(kidney)
 ```
 
---
+---
+# Quadrature likelihood
 
-Write down the log-likelihood function:
-
-```{r, eval = FALSE, echo = TRUE, tidy = TRUE}
-mloglik <- function(pars, data) {
-  # log-likelihood function here
-  # ...
+```{r}
+library(pracma); gl_rule = gaussLaguerre(35)
+mll = function(pars) {
+  p = exp(pars[1])
+  lambda = exp(pars[2])
+  theta = exp(pars[3])
+  beta1 = pars[4]
+  beta2 = pars[5]
+  lli = vapply(1:max(kidney$id),
+                FUN = function(i) {
+                 log_hi = log(p) + log(lambda) + (p - 1) * log(kidney$time[kidney$id == i]) + (kidney$age[kidney$id == i] * beta1 + kidney$sex[kidney$id == i] * beta2)
+                 log_Si = -lambda * kidney$time[kidney$id == i] ^ p * exp(kidney$age[kidney$id == i] * beta1 + kidney$sex[kidney$id == i] * beta2)
+                 Di = sum(kidney$status[kidney$id == i])
+                 intgrdq = function(alpha) exp(alpha + Di * log(alpha) + alpha * sum(log_Si) + (1 / theta - 1) * log(alpha) - alpha / theta)
+                 vintgrdq = Vectorize(intgrdq)
+                 int = sum(gl_rule$w * vintgrdq(gl_rule$x))
+                 ll = sum(kidney$status[kidney$id == i] * (log_hi)) - lgamma(1 / theta) - (1 / theta) * log(theta) + log(int) + sum(log(kidney$time[kidney$id == i]))
+                 return(ll)},
+               FUN.VALUE = numeric(1))
+  ll = sum(lli)
   return(-ll)
 }
 ```
 
---
+```{r, eval = FALSE, echo = TRUE}
+# quadrature nodes
+library(pracma)
+gl_rule = gaussLaguerre(35)
 
-Use a general-purpose optimiser:
-
-```{r, eval = FALSE, echo = TRUE, tidy = TRUE}
-out <- nlm(f = mloglik, p = start_parameters, hessian = TRUE)
-out$stderr <- sqrt(diag(solve(out$hessian)))
+# likelihood
+mll = function(pars) {
+  p = exp(pars[1])
+  lambda = exp(pars[2])
+  theta = exp(pars[3])
+  beta1 = pars[4]
+  beta2 = pars[5]
+  lli = # actual code for cluster-specific log-likelihood goes here
+  ll = sum(lli)
+  return(-ll)
+}
 ```
 
-Other readily available general purpose optimisers: `optim()`, `marqLevAlg()` from package `marqLevAlg`, `bobyqa()` from package `minqa`, ...
+---
+# Starting values
+
+```{r, echo = TRUE}
+sr <- survival::survreg(survival::Surv(time, status) ~ age + sex, 
+                        dist = "weibull", 
+                        data = kidney)
+
+start <- c(log(1 / sr$scale), # p
+           log(exp(sr$coef[1]) ^ (-1 / sr$scale)), # lambda
+           log(1), # theta
+           -sr$coef[2] * (1 / sr$scale), # beta1
+           -sr$coef[3] * (1 / sr$scale)) # beta2
+names(start) <- c("p", "lambda", "theta", "age", "sex")
+start
+```
+
+---
+# Optimise
+
+```{r, echo = TRUE}
+system.time({
+  out <- optim(fn = mll, par = start, hessian = TRUE, method = "BFGS")
+  out$stderr <- sqrt(diag(solve(out$hessian)))
+})
+```
+
+```{r}
+names(out$stderr) <- names(out$par)
+```
+
+```{r, echo = TRUE}
+out$par
+out$stderr
+```
+
+Other readily available general purpose optimisers: `nlm()`, `marqLevAlg()` from package `marqLevAlg`, `bobyqa()` from package `minqa`, ...
 
 ---
 # Discussion
@@ -355,7 +433,11 @@ count: false
 
 * Liu Q, and Pierce DA, _A note on Gauss-Hermite quadrature_. 1994, Biometrika, 81(3):624-629;
 
+* Robert PC and Casella G, _Introducing Monte Carlo methods with R_. 2010, Springer-Verlag, New York;
+
 * Crowther MJ, Look MP, and Riley RD, _Multilevel mixed effects parametric survival models using adaptive Gauss-Hermite quadrature with application to recurrent events and individual participant data meta-analysis_. 2014, Statistics in Medicine, 33(22):3844-3858;
+
+* McGilchrist CA and Aisbett CQ, _Regression with frailty in survival analysis_. 1991, Biometrics, 47:461-66;
 
 * R Code and slides on my Github page: [https://github.com/ellessenne/SAFJR17](https://github.com/ellessenne/SAFJR17)
 
