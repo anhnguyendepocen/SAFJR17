@@ -7,34 +7,15 @@ function(input, output, session) {
   observe({
     # Adjust n. of individuals, simulation 1
     s1_sel_n_clusters = input$s1_n_clusters
-    if (s1_sel_n_clusters %in% c(15, 30)) {
-      updateSelectInput(session,
-                        "s1_n_individuals",
-                        choices = sort(unique(s1$n_individuals[s1$n_clusters %in% c(15, 30)])))
-    } else if (s1_sel_n_clusters == 100) {
-      updateSelectInput(session,
-                        "s1_n_individuals",
-                        choices = sort(unique(s1$n_individuals[s1$n_clusters == 100])))
-    } else {
-      updateSelectInput(session,
-                        "s1_n_individuals",
-                        choices = sort(unique(s1$n_individuals[!(s1$n_clusters %in% c(15, 30, 100))])))
-    }
+    updateSelectInput(session,
+                      "s1_n_individuals",
+                      choices = sort(unique(s1$n_individuals[s1$n_clusters == input$s1_n_clusters])))
+
     # Adjust n. of individuals, simulation 2
     s2_sel_n_clusters = input$s2_n_clusters
-    if (s2_sel_n_clusters %in% c(15, 30)) {
-      updateSelectInput(session,
-                        "s2_n_individuals",
-                        choices = sort(unique(s2$n_individuals[s2$n_clusters %in% c(15, 30)])))
-    } else if (s2_sel_n_clusters == 100) {
-      updateSelectInput(session,
-                        "s2_n_individuals",
-                        choices = sort(unique(s2$n_individuals[s2$n_clusters == 100])))
-    } else {
-      updateSelectInput(session,
-                        "s2_n_individuals",
-                        choices = sort(unique(s2$n_individuals[!(s2$n_clusters %in% c(15, 30, 100))])))
-    }
+    updateSelectInput(session,
+                      "s2_n_individuals",
+                      choices = sort(unique(s2$n_individuals[s2$n_clusters == input$s2_n_clusters])))
   })
 
   # Table of results, simulation 1:
