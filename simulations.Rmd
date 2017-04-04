@@ -1242,7 +1242,7 @@ s_normal_gq_summary <- s_normal_gq_summary %>%
             GQ15_p_se_mean = mean(GQ15_p_se, na.rm = TRUE),
             GQ35_p_se_mean = mean(GQ35_p_se, na.rm = TRUE),
             GQ75_p_se_mean = mean(GQ75_p_se, na.rm = TRUE),
-            G105Q_p_se_mean = mean(GQ105_p_se, na.rm = TRUE),
+            GQ105_p_se_mean = mean(GQ105_p_se, na.rm = TRUE),
             GQ15_p_se_median = median(GQ15_p_se, na.rm = TRUE),
             GQ35_p_se_median = median(GQ35_p_se, na.rm = TRUE),
             GQ75_p_se_median = median(GQ75_p_se, na.rm = TRUE),
