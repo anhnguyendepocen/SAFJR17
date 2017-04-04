@@ -15,42 +15,34 @@ h1, h2, h3 {
 }
 
 .remark-slide-content h1 {
-  font-size: 2.5em;
+  font-size: var(--size-LARGE);
 }
 
 .remark-slide-content h2 {
-  font-size: 2.0em;
+  font-size: var(--size-Large);
 }
 
 .remark-slide-content h3 {
-  font-size: 1.5em;
+  font-size: var(--size-large);
 }
 
 .title-slide h1 {
-  font-size: 2.5em;
+  font-size: var(--size-huge);
 }
 
 .title-slide h2 {
-  font-size: 2.0em;
+  font-size: var(--size-LARGE);
 }
 
 .title-slide h3 {
-  font-size: 1.5em;
+  font-size: var(--size-normalsize);
 }
 
 .footnote {
   position: absolute;
   bottom: 0;
   padding-right: 3em;
-  font-size: 0.75em;
-}
-
-.footnote-ts {
-  text-align: left;
-  position: absolute;
-  bottom: 0;
-  left: 5%;
-  font-size: 0.5em;
+  font-size: var(--size-footnotesize);
 }
 
 ul, ol {
@@ -61,12 +53,44 @@ ul, ol {
   color: var(--colour-uol-red);
 }
 
-.large {
-  font-size: 2em;
+.tiny {
+  font-size: var(--size-tiny);
+}
+
+.scriptsize {
+  font-size: var(--size-scriptsize);
+}
+
+.footnotesize {
+  font-size: var(--size-footnotesize);
 }
 
 .small {
-  font-size: 0.5em;
+  font-size: var(--size-small);
+}
+
+.normalsize {
+  font-size: var(--size-normalsize);
+}
+
+.large {
+  font-size: var(--size-large);
+}
+
+.Large {
+  font-size: var(--size-Large);
+}
+
+.LARGE {
+  font-size: var(--size-LARGE);
+}
+
+.huge {
+  font-size: var(--size-huge);
+}
+
+.Huge {
+  font-size: var(--size-Huge);
 }
 
 a, a > code {
@@ -189,7 +213,7 @@ code {
 }
 
 .left-column h2:last-of-type, .left-column h3:last-child {
-  font-size: 1.75em; /* This is the size of the 'highlighted' left bar header */
+  font-size: var(--size-LARGE); /* This is the size of the 'highlighted' left bar header; normal h2 is Large */
   color: var(--colour-uol-blue);
 }
 
@@ -200,7 +224,7 @@ code {
 
 /* Slide counter */
 .remark-slide-number {
-  font-size: 1em;
+  font-size: var(--size-small);
   margin-bottom: -10px;
   margin-right: 10px;
   color: var(--colour-uol-grey);

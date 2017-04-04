@@ -1,20 +1,20 @@
 ---
 title: "Direct likelihood maximisation using numerical quadrature to approximate intractable terms"
-author: "<b>Alessandro Gasparini</b><sup>a</sup>.footnote-ts[<i>a</i>: Department of Health Sciences, University of Leicester, UK<br><i class='fa fa-envelope-o'></i>: ag475@leicester.ac.uk], Keith R Abrams<sup>a</sup>, Michael J Crowther<sup>a</sup>"
-date: "April 5<sup>th</sup>, 2017"
+subtitle: "Survival Analysis for Junior Researchers, Leicester, UK <br> April 5<sup>th</sup>, 2017 "
+author: "<b>Alessandro Gasparini</b><sup>1</sup>, Keith R Abrams<sup>1</sup>, Michael J Crowther<sup>1</sup> <br><br> .small[<i>1</i>: Department of Health Sciences, University of Leicester, UK <br><br> <i class='fa fa-envelope-o'></i>: ag475@leicester.ac.uk]"
+date: ""
 output:
   xaringan::moon_reader:
     chakra: Presentation_files/remark-latest.min.js
-    css: ["Presentation_files/fonts.css", "Presentation_files/logos.css", "Presentation_files/colours.css", "Presentation_files/uol_remarkjs.css", "Presentation_files/font-awesome.min.css"]
-    lib_dir: libs
+    css: ["Presentation_files/fonts.css", "Presentation_files/logos.css", "Presentation_files/colsizes.css", "Presentation_files/uol_remarkjs.css", "Presentation_files/font-awesome.min.css"]
+    lib_dir: Presentation_files/
     nature:
       ratio: '16:9'
-      highlightStyle: 'arta'
+      highlightStyle: 'googlecode'
       highlightLanguage: 'R'
       highlightSpans: true
       countIncrementalSlides: false
 ---
-count: false
 
 ```{r, include = FALSE}
 if (!requireNamespace("pacman")) install.packages("pacman")
@@ -22,90 +22,120 @@ if (!requireNamespace("devtools")) install.packages("devtools")
 if (!requireNamespace("gganimate")) devtools::install_github("dgrtwo/gganimate")
 if (!requireNamespace("uolvid")) devtools::install_github("ellessenne/uolvid")
 
-pacman::p_load("gganimate", "ggplot2", "fastGHQuad", "dplyr", "tidyr", "knitr", "stringr", "uolvid")
-opts_chunk$set(echo = FALSE, dpi = 300, message = FALSE, warning = FALSE, tidy = FALSE)
+pacman::p_load("gganimate", "ggplot2", "cowplot", "fastGHQuad", "dplyr", "tidyr", "knitr", "stringr", "uolvid", "formattable")
+opts_chunk$set(echo = FALSE, 
+               dpi = 300,
+               message = FALSE, warning = FALSE, tidy = FALSE)
 ```
 
-# Outline
-
-1. Introduction and methods
-
---
-
-2. Simulation study: analytic formulae vs Gaussian quadrature
-
---
-
-3. Simulation study: survival models with log-normal frailties
-
---
-
-4. Application with R
-
---
-
-5. Conclusions
-
----
 # About me
 
-* Currently a first-year PhD student at the Department of Health Sciences, University of Leicester;
+* Currently a first-year PhD student at the Department of Health Sciences, University of Leicester
 
---
-
-* Previous education: BSc in Statistics and Computing Technologies from University of Padua, Italy, and MSc in Biostatistics and Experimental Statistics from University of Milano-Bicocca, Italy;
-
---
+* Previous education: BSc in Statistics and Computing Technologies from University of Padua, Italy, and MSc in Biostatistics and Experimental Statistics from University of Milano-Bicocca, Italy
 
 * PhD project: 
-    - joint modelling of longitudinal and survival data;
-    - modelling the visiting process;
-    - joint modelling of multiple biomarkers and their association with survival;
-    - model discrimination tools to evaluate multiple predictive biomarkers;
-    - application to health records data and cardiovascular epidemiology.
+    - joint modelling of longitudinal and survival data
+    - modelling the visiting process
+    - joint modelling of multiple biomarkers and their association with survival
+    - model discrimination tools to evaluate multiple predictive biomarkers
+    - application to health records data and cardiovascular epidemiology
 
 ---
-class: center, middle, inverse
-count: false
-# Introduction and methods
+class: center, middle
+
+![](Presentation_files/confused2.gif)
 
 ---
-# Models with intractable terms
+# "... to approximate intractable terms"
 
-* Survival model with shared frailty term:
+* _Case study 1_: data on recurrent events, e.g. infections, cancer relapse, ...
+
+--
+
+* Model the within-patient correlation by assuming that it is the result of a latent patient-level effect, i.e. a frailty term
+
+--
+
+* Survival model with a shared frailty term:
 
 $$h_{ij} = h_0 (t) \exp(\beta ^ T Z_{ij} + v_i),$$
 $$L_i = \int_{-\infty} ^ {+\infty} \prod_{j = 1} ^ {n_i} \left[ h_{ij}(x_{ij}) \right] ^ {\Delta_{ij}} \exp \left[ -\int_0 ^ {x_{ij}}  h_{ij}(t) \ d t \right] f_{\theta}(v_i) \ d v_i$$
-???
-The likelihood of many modern statistical models often includes terms that are analytically intractable, such a survival models with frailties, and joint models for longitudinal and survival data. 
 
-Analogously, frailty ~~ random effect
+--
 
-Examples: survival models with recurrent events, IPD meta-analysis, ...
+* We need to choose a distribution $f_\theta(v_i)$ for the frailty, and integrate it out
+
+---
+# "... to approximate intractable terms"
+
+* _Case study 2_: data on repeated measurements of a biomarkers and survival
+
+--
+
+* Model the association between the biomarker and survival
 
 --
 
 * Joint model for longitudinal and survival data:
-
+    
 $$h(t | M_i(t), w_i) = h_0 (t) \exp(\gamma ^ T w_i + \alpha m_i(t)),$$
 $$L_i = \int_{-\infty} ^ {+\infty} P(T_i, d_i | b_i; \theta_t) \left[ \prod_{j = 1} ^ {n_i} P(y_i(t_{ij}) | b_i; \theta_y) \right] P(b_i; \theta_{b_i}) \ db_i$$
 
-???
+--
 
-Joint model likelihood: integral of survival submodel P(T_i, d_i) x mixed model P(y_i(t_ij)) x random effects distribution P(b_i).
+* We need to integrate out the shared random effects
 
-Examples: healthcare data with multiple, itermittently observed biomarkers, dynamic prediction models, accounting for measurement error, ... 
+---
+# "... using numerical quadrature ..."
+
+* Quadrature rule: approximation of the integral of a function, usually stated as a weighted sum of function values at specified points within the domain of integration
 
 --
 
-* ...
+* n-points Gaussian quadrature rule: 
+
+$$\int_X f(x) \ dx = \sum_{i = 1} ^ n w_i f(x_i)$$
 
 ???
 
-Flexible parametric survival models with frailties or random effects, GLMMs, ...
+It yields an _exact_ approximation for polynomials of degree 2n - 1 or less
+
+--
+
+* Goal: reach a given level of precision with the fewest possible function evaluations (the cost of computing n nodes is O(n<sup>2</sup>) operations)
+
+--
+
+> But... what n do we pick?
 
 ---
-# Estimation options
+class: center, middle
+
+```{r, include = FALSE}
+ff = function(x) dnorm(x) / exp(-x^2)
+
+gh_rules <- lapply(2:21, function(i) {
+  gh = gaussHermiteData(i)
+  int = ghQuad(f = ff, rule = gh)
+  data.frame(x = gh$x, w = gh$w, degree = i, integral = int)}) %>% 
+  bind_rows() %>% 
+  mutate(integral = paste("Quadrature integral:", formattable::comma(integral, 10)))
+
+p <- ggplot(gh_rules, aes(x = x, y = w, frame = degree)) + geom_segment(aes(xend = x, yend = 0)) + geom_text(aes(x = min(x), y = max(w), label = integral), hjust = 0, vjust = 1) + stat_function(fun = dnorm, color = uolvid::uol_colours$red[1], lty = "dashed") + labs(x = "", y = "Density")
+gganimate(p, filename = "Presentation_files/gh.gif", fps = 5, width = 2 * opts_chunk$get()$fig.height, height = opts_chunk$get()$fig.height)
+```
+
+<br>
+
+![](Presentation_files/gh.gif)
+
+???
+
+An important feature of quadrature rules is the number of nodes: in order to get a good approximation we need to choose an appropriate number of nodes
+
+---
+# "Direct likelihood maximisation ..."
 
 * The expectation-maximisation [EM] algorithm:
 
@@ -125,6 +155,10 @@ The EM method requires effort in coding the E-M steps; in the E-step, the unknow
 
 > Derive posterior distributions for the model parameters
 
+???
+
+Advantage: in some settings, we don't need numerical integration with MCMC methods (e.g. when dealing with normally-distributed things)
+
 --
 
 * Direct likelihood maximisation:
@@ -137,75 +171,20 @@ The EM method requires effort in coding the E-M steps; in the E-step, the unknow
 
 If closed-form MLEs are not available for a model but the (log-)likelihood can easily be evaluated, one should, before doing anything more sophisticated, simply use a general-purpose numerical optimiser in an attempt to maximise that likelihood, subject to any constraints that there may be on parameters. If that succeeds, there will be no need to derive and code the E and M steps in order to implement the EM algorithm.
 
-Let's go back for a second to the likelihood of a JM: if we want to evaluate the likelihood, we need to find a way to approximate the integral for which there is no closed form solution
-
----
-# Gaussian quadrature
-
-> In numerical analysis, a quadrature rule is an approximation of the definite integral of a function, usually stated as a weighted sum of function values at specified points within the domain of integration.
-
---
-
-n-point Gaussian quadrature rule: 
-
-$$\int_X f(x) \ dx = \sum_{i = 1} ^ n w_i f(x_i)$$
-???
-
-n-point Gaussian quadrature rule yields an exact approximation for polynomials of degree 2n - 1 or less
-
---
-
-If we rewrite $f(x)$ as $f(x)=\omega(x)g(x)$, weights and nodes $w_i'$ and $x_i'$ that depend on $\omega(x)$ may give better results:
-
-$$\int_X f(x) \ dx = \int_X \omega(x)g(x) \ dx = \sum_{i = 1} ^ n w_i' g(x_i')$$
-
-A commonly used weighting function is $\omega(x) = e ^ {- x ^ 2}$, which yields the so-called Gauss-Hermite quadrature rule.
-
-???
-
-g(x) approximately polynomial
-omega(x) known
-w_i: weights
-x_i: nodes
-
---
-
-Alternatives: adaptive quadrature rules, Monte-Carlo integration (and importance sampling), Bayesian quadrature, ...
-
----
-class: center, middle
-
-```{r, include = FALSE}
-ff = function(x) dnorm(x) / exp(-x^2)
-
-gh_rules <- lapply(seq(2, 32, by = 5), function(i) {
-  gh = gaussHermiteData(i)
-  int = ghQuad(f = ff, rule = gh)
-  data.frame(x = gh$x, w = gh$w, degree = i, integral = int)}) %>% 
-  bind_rows() %>% 
-  mutate(integral = paste("Quadrature integral:", formattable::comma(integral, 10)))
-
-p <- ggplot(gh_rules, aes(x = x, y = w, frame = degree)) + geom_segment(aes(xend = x, yend = 0)) + geom_text(aes(x = -8, y = 1, label = integral), hjust = 0, vjust = 0) + stat_function(fun = dnorm, color = "red", lty = "dashed") + theme_bw() + labs(x = "", y = "")
-gganimate(p, filename = "Presentation_files/gh.gif", fps = 2, width = 8, height = 4.5)
-```
-
-<br>
-
-![](Presentation_files/gh.gif)
-
 ---
 class: center, middle, inverse
 count: false
-# Simulation study #1: <br/> Analytic formulae vs Gaussian quadrature
+# Simulation studies
 
 ---
-# Rationale
+# Simulation N. 1
 
-* Aim: compare estimation procedure using analytic formulae vs using Gaussian quadrature and approximate integrals;
+* _Aim_: evaluate the accuracy of Gaussian quadrature methods in settings where we do not need to use it, as we can derive analytical formulae
 
 --
 
-* Parametric survival model with shared frailty:
+* Parametric survival model with shared Gamma frailty:
+
 $$h_{ij}(t_{ij} | \alpha_i) = \alpha_i h_{ij}(t_{ij}) = \alpha_i p \lambda t_{ij} ^ {p - 1} \exp(X_{ij} \beta)$$
 
 ???
@@ -215,57 +194,118 @@ Lambda i.e. intercept explicited there
 
 --
 
-* The cluster-specific contribution to the likelihood is:
-$$L_i(\alpha_i) = \alpha_i ^ {D_i} \prod_{j = 1} ^ {n_i} \left[ S_{ij}(t_{ij}) ^ {\alpha_i} \left( h_{ij}(t_{ij}) \right) ^ {d_{ij}} \right]$$
-
---
-
 * The unconditional contribution to the likelihood is:
-$$L_i = \int L_i(\alpha_i) g(\alpha_i) \ d \alpha_i$$
+
+$$L_i = \int_{0} ^ {+\infty} \alpha_i ^ {D_i} \prod_{j = 1} ^ {n_i} \left[ S_{ij}(t_{ij}) ^ {\alpha_i} \left( h_{ij}(t_{ij}) \right) ^ {d_{ij}} \right] g(\alpha_i) \ d \alpha_i$$
 
 ---
 # Simulation scenarios
 
-* Weibull baseline hazard with shape p = 0.5, scale &lambda; = 1, and shared Gamma-distributed frailty term;
+* Weibull baseline hazard with shape p = 0.5, scale &lambda; = 1, and shared Gamma-distributed frailty term
 
---
+* 1,000 simulations per scenario
 
-* 1,000 simulations per scenario;
+* number of clusters: {25, 50, 100, 200}, number of individuals per cluster: {25, 50, 100, 250, 500, 1000}
 
---
+* treatment effect: {-0.50, 0.00, 0.50}
 
-* number of clusters: {25, 50, 100, 200}, number of individuals per cluster: {25, 50, 100, 250, 500, 1000};
+* variance of the frailty (&theta;): {0.25, 0.50, 1.00}
 
---
+We compare estimates from:
 
-* treatment effect: {-0.50, 0.00, 0.50};
+1. model using analytical formulae
 
-???
+2. model using Gauss-Laguerre quadrature with {15, 35, 75, 105} nodes
 
-i.e. log(HR)
-
---
-
-* variance of the frailty (&theta;): {0.25, 0.50, 1.00};
-
---
-
-* number of quadrature nodes<sup>1</sup>.footnote[1: Gauss-Laguerre quadrature rule]: {15, 35, 75, 105}.
+3. model using Gauss-Kronrod quadrature, as implemented in the base-R `integrate()` function
 
 ---
 # Results
 
-> Switching to a shiny app for exploring results...
+_Scenario_: 50 clusters of 250 individuals each, negative treatment effect (log-HR: -0.50), medium frailty variance (0.50). _Parameter of interest_: treatment effect.
+
+.center[
+
+```{r, fig.width = 2 * opts_chunk$get()$fig.height}
+s1 <- readRDS("SiReX/s_an_vs_gq_vs_int_summary.RDS") %>%
+  ungroup() %>%
+  gather(key = key, value = value, 7:234) %>%
+  separate(key, c("method", "par", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), par, stat)) %>%
+  spread(key = method, value = value)
+
+p1.1 <- s1 %>% 
+  filter(n_clusters == 50 & n_individuals == 250 & treatment_effect == -0.50 & frailty_theta == 0.50 & par == "trt" & stat == "pbias") %>% 
+  gather(key = key, value = value, 9:14) %>% 
+  mutate(key = factor(key, levels = c("AF", "GQ15", "GQ35", "GQ75", "GQ105", "IN"))) %>%
+  ggplot(aes(x = key, y = value)) + 
+  geom_bar(stat = "identity", alpha = 1 / 3) +
+  geom_text(aes(y = ifelse(value > 0, value + (max(abs(value)) * 5 / 100), value - (max(abs(value)) * 5 / 100)), label = percent(value))) +
+  scale_y_continuous(labels = percent) + 
+  theme_cowplot() + 
+  labs(x = "", y = "", title = "Percentage bias")
+
+p1.2 <- s1 %>% 
+  filter(n_clusters == 50 & n_individuals == 250 & treatment_effect == -0.50 & frailty_theta == 0.50 & par == "trt" & stat == "covp") %>% 
+  gather(key = key, value = value, 9:14) %>% 
+  mutate(key = factor(key, levels = c("AF", "GQ15", "GQ35", "GQ75", "GQ105", "IN"))) %>%
+  ggplot(aes(x = key, y = value)) + 
+  geom_bar(stat = "identity", alpha = 1 / 3) + 
+  geom_abline(intercept = 0.95, slope = 0, col = "red", lty = "dashed") +
+  geom_text(aes(y = ifelse(value > 0, value + (max(abs(value)) * 5 / 100), value - (max(abs(value)) * 5 / 100)), label = percent(value))) +
+  scale_y_continuous(labels = percent) + 
+  coord_cartesian(ylim = c(0, 1)) +
+  theme_cowplot() + 
+  labs(x = "", y = "", title = "Coverage probability")
+
+plot_grid(p1.1, p1.2)
+```
+
+]
 
 ---
-class: center, middle, inverse
-count: false
-# Simulation study #2: <br/> Parametric survival model with a random effect
+# Results
+
+_Scenario_: 50 clusters of 250 individuals each, negative treatment effect (log-HR: -0.50), medium frailty variance (0.50). _Parameter of interest_: frailty variance &theta;.
+
+.center[
+
+```{r, fig.width = 2 * opts_chunk$get()$fig.height}
+p2.1 <- s1 %>% 
+  filter(n_clusters == 50 & n_individuals == 250 & treatment_effect == -0.50 & frailty_theta == 0.50 & par == "theta" & stat == "pbias") %>% 
+  gather(key = key, value = value, 9:14) %>% 
+  mutate(key = factor(key, levels = c("AF", "GQ15", "GQ35", "GQ75", "GQ105", "IN"))) %>%
+  ggplot(aes(x = key, y = value)) + 
+  geom_bar(stat = "identity", alpha = 1 / 3) + 
+  geom_text(aes(y = ifelse(value > 0, value + (max(abs(value)) * 5 / 100), value - (max(abs(value)) * 5 / 100)), label = percent(value))) +
+  scale_y_continuous(labels = percent) + 
+  theme_cowplot() + 
+  labs(x = "", y = "", title = "Percentage bias")
+
+p2.2 <- s1 %>% 
+  filter(n_clusters == 50 & n_individuals == 250 & treatment_effect == -0.50 & frailty_theta == 0.50 & par == "theta" & stat == "covp") %>% 
+  gather(key = key, value = value, 9:14) %>% 
+  mutate(key = factor(key, levels = c("AF", "GQ15", "GQ35", "GQ75", "GQ105", "IN"))) %>%
+  ggplot(aes(x = key, y = value)) + 
+  geom_bar(stat = "identity", alpha = 1 / 3) + 
+  geom_abline(intercept = 0.95, slope = 0, col = "red", lty = "dashed") +
+  geom_text(aes(y = ifelse(value > 0, value + (max(abs(value)) * 5 / 100), value - (max(abs(value)) * 5 / 100)), label = percent(value))) +
+  scale_y_continuous(labels = percent) + 
+  coord_cartesian(ylim = c(0, 1)) +
+  theme_cowplot() + 
+  labs(x = "", y = "", title = "Coverage probability")
+
+plot_grid(p2.1, p2.2)
+
+rm(s1, p1.1, p1.2)
+```
+
+]
 
 ---
-# Rationale
+# Simulation N. 2
 
-* Aim: estimate a parametric survival model with intractable terms using Gaussian quadrature;
+* Aim: evaluate direct likelihood maximisation using quadrature in settings where it is not possible to derive analytical formulae
 
 --
 
@@ -285,143 +325,186 @@ p(b_i) is the normal density for the random effects
 ---
 # Simulation scenarios
 
-* Weibull baseline hazard with shape p = 1.5, scale &lambda; = 3, and a random treatment effect;
+* Weibull baseline hazard with shape p = 1.5, scale &lambda; = 3, and a random treatment effect
 
---
+* 1,000 simulations per scenario
 
-* 1,000 simulations per scenario;
+* number of clusters: {25, 50, 100, 200}, number of individuals per cluster: {25, 50, 100, 250, 500, 1000}
 
---
+* treatment effect: {-0.50, 0.00, 0.50}
 
-* number of clusters: {25, 50, 100, 200}, number of individuals per cluster: {25, 50, 100, 250, 500, 1000};
+* standard deviation of the random effect (&sigma;): {0.25, 0.50, 1.00}
 
---
-
-* treatment effect: {-0.50, 0.00, 0.50};
-
---
-
-* variance of the random effect (&sigma;<sup>2</sup>): {0.25, 0.50, 1.00};
-
---
-
-* number of quadrature nodes<sup>2</sup>.footnote[2: Gauss-Hermite quadrature rule]: {15, 35, 75, 105}.
+We compare estimates from models using Gauss-Hermite quadrature with {15, 35, 75, 105} nodes.
 
 ---
 # Results
 
-> Switching to a shiny app for exploring results...
+_Scenario_: 100 clusters of 50 individuals each, positive treatment effect (log-HR: 0.50), high random effect standard error (1.00). _Parameter of interest_: treatment effect.
+
+.center[
+
+```{r, fig.width = 2 * opts_chunk$get()$fig.height}
+s2 <- readRDS("SiReX/s_normal_gq_summary.RDS") %>%
+  ungroup() %>%
+  gather(key = key, value = value, 7:158) %>%
+  separate(key, c("method", "par", "stat"), sep = "_", extra = "merge") %>%
+  mutate(stat = ifelse(is.na(stat), par, stat)) %>%
+  spread(key = method, value = value)
+
+p2.1 <- s2 %>% 
+  filter(n_clusters == 100 & n_individuals == 50 & treatment_effect == 0.50 & frailty_sigma == 1.0 & par == "trt" & stat == "pbias") %>% 
+  gather(key = key, value = value, 9:12) %>% 
+  mutate(key = factor(key, levels = c("GQ15", "GQ35", "GQ75", "GQ105"))) %>%
+  ggplot(aes(x = key, y = value)) + 
+  geom_bar(stat = "identity", alpha = 1 / 3) + 
+  geom_text(aes(y = ifelse(value > 0, value + (max(abs(value)) * 5 / 100), value - (max(abs(value)) * 5 / 100)), label = percent(value))) +
+  scale_y_continuous(labels = percent) + 
+  labs(x = "", y = "", title = "Percentage bias")
+
+p2.2 <- s2 %>% 
+  filter(n_clusters == 100 & n_individuals == 50 & treatment_effect == 0.50 & frailty_sigma == 1.0 & par == "trt" & stat == "covp") %>% 
+  gather(key = key, value = value, 9:12) %>% 
+  mutate(key = factor(key, levels = c("GQ15", "GQ35", "GQ75", "GQ105"))) %>%
+  ggplot(aes(x = key, y = value)) + 
+  geom_bar(stat = "identity", alpha = 1 / 3) + 
+  geom_abline(intercept = 0.95, slope = 0, col = "red", lty = "dashed") +
+  geom_text(aes(y = ifelse(value > 0, value + (max(abs(value)) * 5 / 100), value - (max(abs(value)) * 5 / 100)), label = percent(value))) +
+  scale_y_continuous(labels = percent) + 
+  coord_cartesian(ylim = c(0, 1)) +
+  labs(x = "", y = "", title = "Coverage probability")
+
+plot_grid(p2.1, p2.2)
+```
+
+]
+
+---
+# Results
+
+_Scenario_: 100 clusters of 50 individuals each, positive treatment effect (log-HR: 0.50), high random effect standard error (1.00). _Parameter of interest_: random effect standard error &sigma;.
+
+.center[
+
+```{r, fig.width = 2 * opts_chunk$get()$fig.height}
+p2.1 <- s2 %>% 
+  filter(n_clusters == 100 & n_individuals == 50 & treatment_effect == 0.50 & frailty_sigma == 1.00 & par == "sigma" & stat == "pbias") %>% 
+  gather(key = key, value = value, 9:12) %>% 
+  mutate(key = factor(key, levels = c("GQ15", "GQ35", "GQ75", "GQ105"))) %>%
+  ggplot(aes(x = key, y = value)) + 
+  geom_bar(stat = "identity", alpha = 1 / 3) + 
+  geom_text(aes(y = ifelse(value > 0, value + (max(abs(value)) * 5 / 100), value - (max(abs(value)) * 5 / 100)), label = percent(value))) +
+  scale_y_continuous(labels = percent) + 
+  labs(x = "", y = "", title = "Percentage bias")
+
+p2.2 <- s2 %>% 
+  filter(n_clusters == 100 & n_individuals == 50 & treatment_effect == 0.50 & frailty_sigma == 1.00 & par == "sigma" & stat == "covp") %>% 
+  gather(key = key, value = value, 9:12) %>% 
+  mutate(key = factor(key, levels = c("GQ15", "GQ35", "GQ75", "GQ105"))) %>%
+  ggplot(aes(x = key, y = value)) + 
+  geom_bar(stat = "identity", alpha = 1 / 3) + 
+  geom_abline(intercept = 0.95, slope = 0, col = "red", lty = "dashed") +
+  geom_text(aes(y = ifelse(value > 0, value + (max(abs(value)) * 5 / 100), value - (max(abs(value)) * 5 / 100)), label = percent(value))) +
+  scale_y_continuous(labels = percent) + 
+  coord_cartesian(ylim = c(0, 1)) +
+  labs(x = "", y = "", title = "Coverage probability")
+
+plot_grid(p2.1, p2.2)
+
+rm(s2, p2.1, p2.2)
+```
+
+]
 
 ---
 class: center, middle, inverse
 count: false
-# A quick R example 
+# An example using R 
 
 ---
-# Dataset
 
-Data on the recurrence times to infection, at the point of insertion of the catheter, for kidney patients using portable dialysis equipment<sup>+</sup>.footnote[<sup>+</sup>McGilchrist and Aisbett, 1991.]. Catheters may be removed for reasons other than infection, in which case the observation is censored. Each patient has exactly 2 observations.
+<br> 
 
-```{r, echo = TRUE}
-data(kidney, package = "survival")
-str(kidney)
-```
+* Step 1: get the quadrature nodes locations and weights:
 
----
-# Quadrature likelihood
-
-```{r}
-library(pracma); gl_rule = gaussLaguerre(35)
-mll = function(pars) {
-  p = exp(pars[1])
-  lambda = exp(pars[2])
-  theta = exp(pars[3])
-  beta1 = pars[4]
-  beta2 = pars[5]
-  lli = vapply(1:max(kidney$id),
-                FUN = function(i) {
-                 log_hi = log(p) + log(lambda) + (p - 1) * log(kidney$time[kidney$id == i]) + (kidney$age[kidney$id == i] * beta1 + kidney$sex[kidney$id == i] * beta2)
-                 log_Si = -lambda * kidney$time[kidney$id == i] ^ p * exp(kidney$age[kidney$id == i] * beta1 + kidney$sex[kidney$id == i] * beta2)
-                 Di = sum(kidney$status[kidney$id == i])
-                 intgrdq = function(alpha) exp(alpha + Di * log(alpha) + alpha * sum(log_Si) + (1 / theta - 1) * log(alpha) - alpha / theta)
-                 vintgrdq = Vectorize(intgrdq)
-                 int = sum(gl_rule$w * vintgrdq(gl_rule$x))
-                 ll = sum(kidney$status[kidney$id == i] * (log_hi)) - lgamma(1 / theta) - (1 / theta) * log(theta) + log(int) + sum(log(kidney$time[kidney$id == i]))
-                 return(ll)},
-               FUN.VALUE = numeric(1))
-  ll = sum(lli)
-  return(-ll)
-}
-```
-
-```{r, eval = FALSE, echo = TRUE}
-# quadrature nodes
+```{r, echo = TRUE, eval = FALSE}
 library(pracma)
 gl_rule = gaussLaguerre(35)
+```
 
-# likelihood
-mll = function(pars) {
-  p = exp(pars[1])
-  lambda = exp(pars[2])
-  theta = exp(pars[3])
-  beta1 = pars[4]
-  beta2 = pars[5]
-  lli = # actual code for cluster-specific log-likelihood goes here
-  ll = sum(lli)
-  return(-ll)
+---
+count: false
+
+<br> 
+
+* Step 1: get the quadrature nodes locations and weights
+
+* Step 2: code the negative log-likelihood function:
+
+```{r, echo = TRUE, eval = FALSE}
+nloglik <- function(pars, data) {
+  # loglik_i = ...
+  loglik = sum(loglik_i)
+  return(-loglik)
 }
 ```
 
 ---
-# Starting values
+count: false
 
-```{r, echo = TRUE}
-sr <- survival::survreg(survival::Surv(time, status) ~ age + sex, 
-                        dist = "weibull", 
-                        data = kidney)
+<br> 
 
-start <- c(log(1 / sr$scale), # p
-           log(exp(sr$coef[1]) ^ (-1 / sr$scale)), # lambda
-           log(1), # theta
-           -sr$coef[2] * (1 / sr$scale), # beta1
-           -sr$coef[3] * (1 / sr$scale)) # beta2
-names(start) <- c("p", "lambda", "theta", "age", "sex")
-start
+* Step 1: get the quadrature nodes locations and weights
+
+* Step 2: code the negative log-likelihood function
+
+* Step 3: minimise the negative log-likelihood:
+
+```{r, echo = TRUE, eval = FALSE}
+optim(fn = nloglik, par = start)
 ```
+
+A plethora of general-purpose optimisers available in `R`: `nlm()`, `margLevAlg()`, `bobyqa()`, `nloptr()`, ...
 
 ---
-# Optimise
+count: false
 
-```{r, echo = TRUE}
-system.time({
-  out <- optim(fn = mll, par = start, hessian = TRUE, method = "BFGS")
-  out$stderr <- sqrt(diag(solve(out$hessian)))
-})
-```
 
-```{r}
-names(out$stderr) <- names(out$par)
-```
+<br> 
 
-```{r, echo = TRUE}
-out$par
-out$stderr
-```
+* Step 1: get the quadrature nodes locations and weights
 
-Other readily available general purpose optimisers: `nlm()`, `marqLevAlg()` from package `marqLevAlg`, `bobyqa()` from package `minqa`, ...
+* Step 2: code the negative log-likelihood function
+
+* Step 3: minimise the negative log-likelihood
+
+* Step 4:
+<span style="display:block; height: 5%;"></span>
+
+.center[
+
+![](Presentation_files/mission_accomplished.gif)
+
+]
 
 ---
 # Discussion
 
-1. Gaussian quadrature works well compared to analytical formulae; 
+1. Gaussian quadrature works well, even in settings where it is not needed
 
---
+2. Gaussian quadrature works well in settings where analytical formulae are not available
 
-2. Gaussian quadrature works well in settings where analytical formulae are not available;
+3. Direct likelihood maximisation is straightforward to implement
 
---
+4. It is important to assess whether the number of quadrature nodes is appropriate
 
-3. Direct likelihood maximisation is straightforward to implement.
+5. Future work:
+
+    * extending to adaptive quadrature methods and other numerical integration methods (Monte-Carlo integration, importance sampling, ...)
+    
+    * exploring impact of model misspecification
+    
+    * developing an interactive tool for exploring simulations results
 
 ---
 class: back-slide
@@ -433,12 +516,17 @@ count: false
 
 * Liu Q, and Pierce DA, _A note on Gauss-Hermite quadrature_. 1994, Biometrika, 81(3):624-629;
 
+* Gautschi W, _Construction of Gauss-Christoffel quadrature formulas_. 1968, Mathematics of Computation, 22:251-270;
+
 * Robert PC and Casella G, _Introducing Monte Carlo methods with R_. 2010, Springer-Verlag, New York;
 
 * Crowther MJ, Look MP, and Riley RD, _Multilevel mixed effects parametric survival models using adaptive Gauss-Hermite quadrature with application to recurrent events and individual participant data meta-analysis_. 2014, Statistics in Medicine, 33(22):3844-3858;
 
-* McGilchrist CA and Aisbett CQ, _Regression with frailty in survival analysis_. 1991, Biometrics, 47:461-66;
-
 * R Code and slides on my Github page: [https://github.com/ellessenne/SAFJR17](https://github.com/ellessenne/SAFJR17)
 
-* E-mail: [ag475@leicester.ac.uk](mailto:ag475@leicester.ac.uk)
+* E-mail me at [ag475@leicester.ac.uk](mailto:ag475@leicester.ac.uk)
+
+```{r}
+# Export slides in .pdf format as well
+# Requires decktape.js: https://github.com/yihui/xaringan/wiki/Export-Slides-to-PDF
+```
