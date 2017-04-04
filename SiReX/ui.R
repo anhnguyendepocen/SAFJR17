@@ -84,7 +84,7 @@ body <- dashboardBody(
                 selectInput("s2_n_clusters", "Number of clusters:", sort(unique(s2$n_clusters))),
                 selectInput("s2_n_individuals", "Number of individuals per cluster:", sort(unique(s2$n_individuals))),
                 selectInput("s2_treatment_effect", "Treatment effect:", sort(unique(s2$treatment_effect))),
-                selectInput("s2_frailty_sigma", "Random effect variance:", sort(unique(s2$frailty_sigma))),
+                selectInput("s2_frailty_sigma", "Random effect standard error:", sort(unique(s2$frailty_sigma))),
                 p("N.B.: only the possible combinations of clusters and individuals per clusters are displayed."),
                 hr(),
                 selectInput("s2_par", "Parameter:", choices = c(Lambda = "lambda", P = "p", Sigma = "sigma", `Tr. effect` = "trt"), selected = "trt")
@@ -109,7 +109,7 @@ body <- dashboardBody(
               tags$li("Number of clusters: 15, 30, 100, 200;"),
               tags$li("Number of individuals per cluster: 25, 50, 100, 250, 500, 1000;"),
               tags$li("Treatment effect: -0.50, 0.00, 0.50;"),
-              tags$li("Variance of the random treatment effect: 0.25, 0.50, 1.00.")
+              tags$li("Standard deviation of the random treatment effect: 0.25, 0.50, 1.00.")
             )
     )
   )
