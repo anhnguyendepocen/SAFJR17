@@ -42,11 +42,6 @@ opts_chunk$set(echo = FALSE,
     - application to health records data and cardiovascular epidemiology
 
 ---
-class: center, middle
-
-![](Presentation_files/confused2.gif)
-
----
 # "... to approximate intractable terms"
 
 * _Case study 1_: data on recurrent events, e.g. infections, cancer relapse, ...
@@ -494,9 +489,9 @@ count: false
 
 2. Gaussian quadrature works well in settings where analytical formulae are not available
 
-3. Direct likelihood maximisation is straightforward to implement
+3. It is important to assess whether the number of quadrature nodes is appropriate
 
-4. It is important to assess whether the number of quadrature nodes is appropriate
+4. Direct likelihood maximisation is straightforward to implement
 
 5. Future work:
 
