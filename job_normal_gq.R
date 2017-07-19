@@ -1,45 +1,64 @@
-# job script for submission to HPC
+cat("Starting time:", paste(Sys.time()))
+
+# Job script for submission to HPC
 rm(list = ls())
 gc()
 source("functions.R")
+
 if (!requireNamespace("pacman")) install.packages("pacman")
-pacman::p_load("foreach", "doSNOW", "parallel", "dplyr")
+pacman::p_load("doSNOW", "snow", "Rmpi", "dplyr", "foreach")
 
-# define scenarios
-scenarios = expand.grid(
-  n_individuals = c(25, 50, 100, 250, 500, 1000),
-  n_clusters = c(25, 50, 100, 150),
-  frailty_sigma = c(0.25, 0.50, 1.00),
-  treatment_effect = c(-0.50, 0.00, 0.50),
-  lambda = 3,
-  p = 1.5) %>%
-  filter(!(n_individuals %in% c(500, 1000) & n_clusters == 100) & !(n_individuals %in% c(250, 500, 1000) & n_clusters == 150) & !(n_individuals == 1000 & n_clusters == 50))
+# Get number of procs requested
+npr = as.numeric(Sys.getenv("PBS_NUM_NODES")) * as.numeric(Sys.getenv("PBS_NUM_PPN"))
 
-# get parameter from array id
-TID = commandArgs(trailingOnly = T)
+# Get array ID
+TID = Sys.getenv("PBS_ARRAYID")
 
-# setup parallel cluster
-cl <- makeSOCKcluster(24)
+# Load data
+data = readRDS(paste0("Data/simdata_normal_gq_", TID, ".RDS"))
+
+# Setup MPI cluster
+cl <- getMPIcluster()
 registerDoSNOW(cl)
 
-# generate seeds for each simulation
-set.seed(TID)
-sds <- round(runif(1000, 0, 1e7))
+# Export data and functions to the nodes
+clusterExport(cl, "data")
+clusterExport(cl, "sim_normal_gq")
 
-# run 1000 simulations for the current scenario
-s = foreach(siid = sds, .combine = bind_rows) %dopar% {
-  with(scenarios[TID,],
-       sim_normal_gq(seed = siid,
-                     n_individuals = n_individuals,
-                     n_clusters = n_clusters,
-                     frailty_sigma = frailty_sigma,
-                     treatment_effect = treatment_effect,
-                     lambda = lambda,
-                     p = p))
-}
+# Split replications in batches
+indx = split(1:length(data), ceiling(seq_along(1:length(data)) / (npr - 1)))
 
-# stop the parallel cluster
+# Start timer
+tstart = Sys.time()
+tstart
+
+# Run replications in batches
+s_list = lapply(indx,
+                function(xx) {
+                  cat("Batch:", xx, "\n")
+                  # Run sim_normal_gq on each simulated dataset
+                  ss = parLapply(cl, xx, function(xx) {
+                    out = sim_normal_gq(data[[xx]], xx)
+                    return(out)
+                  })
+                  # Bind rows here
+                  ss = bind_rows(ss)
+                  return(ss)
+                })
+
+# Stop timer
+tstop = Sys.time()
+tstop
+
+# Bind rows and calculate timediff
+s = bind_rows(s_list) %>%
+  mutate(timediff = difftime(tstop, tstart, units = "hours") %>% as.numeric())
+
+# Save the results
+saveRDS(s, paste0("Results/res_normal_gq_", TID, ".RDS"))
+
+# Write OK to signal everything went well
+cat("TID", TID, "OK. Finishing time:", paste(Sys.time()))
+
+# Finally, stop the parallel cluster
 stopCluster(cl)
-
-# save results
-saveRDS(s, paste0("Results/s_normal_gq_", TID, ".RDS"))

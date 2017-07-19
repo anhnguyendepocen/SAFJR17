@@ -3,13 +3,13 @@
 #PBS -o Output/out_an_vs_gq_vs_int.txt
 #PBS -e Error/err_an_vs_gq_vs_int.txt
 #PBS -N safjr17_sim_an_vs_gq_vs_int
-#PBS -l walltime=5:00:00
-#PBS -l pvmem=2gb
-#PBS -l nodes=1:ppn=14
+#PBS -l walltime=4:00:00
+#PBS -l vmem=25gb
+#PBS -l nodes=5:ppn=5
 #PBS -m ea
-#PBS -t 1-162
+#PBS -t 1-54
 
-TID=$PBS_ARRAYID
 cd $PBS_O_WORKDIR
 module load R
-Rscript job_an_vs_gq_vs_int.R ${TID}
+module load openmpi/gcc/2.0.2
+mpirun ./RMPISNOW < job_an_vs_gq_vs_int.R
