@@ -11,5 +11,5 @@
 
 cd $PBS_O_WORKDIR
 module load R
-module load openmpi/gcc/2.0.2
+module load openmpi/gcc
 mpirun ./RMPISNOW < job_an_vs_gq_vs_int.R
