@@ -1,66 +1,11 @@
-### function for generating data
-
-gen_data <- function(seed, n_individuals, n_clusters, frailty_theta, treatment_effect, lambda, p) {
-  # set seed
-  set.seed(seed)
-  # cluster id
-  grpid = rep(1:n_clusters, each = n_individuals)
-  # treatment effect
-  trt = rbinom(n_individuals * n_clusters, size = 1, prob = 0.5)
-  # Gamma frailty
-  fr = rgamma(n_clusters, shape = 1 / frailty_theta, scale = frailty_theta)
-  frvec = rep(fr, each = n_individuals)
-  # survival times
-  s = (-log(runif(n_individuals * n_clusters)) / (lambda * exp(trt * treatment_effect) * frvec)) ^ (1 / p)
-  # censoring time
-  c = (-log(runif(n_individuals * n_clusters)) / lambda) ^ (1 / p)
-  # survival time
-  t = pmin(s, c)
-  # event indicator variable
-  d = as.numeric(s <= c)
-  return(data.frame(grpid, trt, frvec, t, d))
-}
-# gen_data(seed = 1234, n_individuals = 100, n_clusters = 5, frailty_theta = 1, treatment_effect = 0.5, lambda = 3, p = 1.5) %>% View()
-
-gen_data_normal <- function(seed, n_individuals, n_clusters, frailty_sigma, treatment_effect, lambda, p) {
-  # set seed
-  set.seed(seed)
-  # cluster id
-  grpid = rep(1:n_clusters, each = n_individuals)
-  # treatment status
-  trt = rbinom(n_individuals * n_clusters, size = 1, prob = 0.5)
-  # random effect + treatment effect
-  reff = rnorm(n_clusters, mean = 0, sd = frailty_sigma)
-  reffvec = rep(reff, each = n_individuals)
-  # survival times
-  s = (-log(runif(n_individuals * n_clusters)) / (lambda * exp(trt * (treatment_effect + reffvec)))) ^ (1 / p)
-  # censoring time
-  c = (-log(runif(n_individuals * n_clusters)) / lambda) ^ (1 / p)
-  # survival time
-  t = pmin(s, c)
-  # event indicator variable
-  d = as.numeric(s <= c)
-  return(data.frame(grpid, trt, reffvec, t, d))
-}
-# gen_data_normal(seed = 1234, n_individuals = 100, n_clusters = 5, frailty_sigma = 0.50, treatment_effect = 0.5, lambda = 3, p = 1.5) %>% View()
-
 ### functions for model estimation
 
 # function for estimating a model with a (potentially shared) Gamma frailty term
-sim_an_vs_gq_vs_int <- function(seed, n_individuals, n_clusters, frailty_theta, treatment_effect, lambda, p) {
+sim_an_vs_gq_vs_int <- function(data) {
   # seed = 265536720; n_individuals = 25; n_clusters = 15; frailty_theta = 0.25; treatment_effect = -0.5; lambda = 0.5; p = 1
   # packages
   if (!requireNamespace("pacman")) install.packages("pacman")
   pacman::p_load("numDeriv", "minqa", "pracma", "marqLevAlg")
-
-  # generate data
-  df = gen_data(seed = seed,
-                n_individuals = n_individuals,
-                n_clusters = n_clusters,
-                frailty_theta = frailty_theta,
-                treatment_effect = treatment_effect,
-                lambda = lambda,
-                p = p)
 
   # starting parameters
   sr = survival::survreg(survival::Surv(t, d) ~ trt, dist = "weibull", data = df)
