@@ -1,9 +1,10 @@
 ### functions for model estimation
 
 # function for estimating a model with a (potentially shared) Gamma frailty term
-sim_an_vs_gq_vs_int <- function(data) {
+sim_an_vs_gq_vs_int <- function(df) {
   # seed = 265536720; n_individuals = 25; n_clusters = 15; frailty_theta = 0.25; treatment_effect = -0.5; lambda = 0.5; p = 1
   # packages
+
   if (!requireNamespace("pacman")) install.packages("pacman")
   pacman::p_load("numDeriv", "minqa", "pracma", "marqLevAlg")
 
@@ -17,6 +18,8 @@ sim_an_vs_gq_vs_int <- function(data) {
             log(1), # theta
             -sr$coef[2] * (1 / sr$scale)) # beta1, coefficient of trt, AFT --> PH
   names(start) <- c("p", "lambda", "theta", "trt")
+
+  n_clusters = unique(df$n_clusters)
 
   # analytical likelihood
   if (n_clusters == 1) {
@@ -340,40 +343,30 @@ sim_an_vs_gq_vs_int <- function(data) {
     }
   }
 
-  output = data.frame(seed = seed,
-                      n_individuals = n_individuals,
-                      n_clusters = n_clusters,
-                      frailty_theta = frailty_theta,
-                      treatment_effect = treatment_effect,
-                      lambda = lambda,
-                      p = p,
+  output = data.frame(n_individuals = unique(df$n_individuals),
+                      n_clusters = unique(df$n_clusters),
+                      fv_dist = unique(df$fv_dist),
+                      fv = unique(df$fv),
+                      treatment_effect = unique(df$treatment_effect),
+                      lambda = unique(df$lambda),
+                      p = unique(df$p),
                       AF_p = o_an$par[1], AF_p_se = o_an$se[1], AF_lambda = o_an$par[2], AF_lambda_se = o_an$se[2], AF_theta = o_an$par[3], AF_theta_se = o_an$se[3], AF_trt = o_an$par[4], AF_trt_se = o_an$se[4], AF_value = -o_an$value, AF_convergence = o_an$convergence,
                       GQ15_p = o_gq_15$par[1], GQ15_p_se = o_gq_15$se[1], GQ15_lambda = o_gq_15$par[2], GQ15_lambda_se = o_gq_15$se[2], GQ15_theta = o_gq_15$par[3], GQ15_theta_se = o_gq_15$se[3], GQ15_trt = o_gq_15$par[4], GQ15_trt_se = o_gq_15$se[4], GQ15_value = -o_gq_15$value, GQ15_convergence = o_gq_15$convergence,
                       GQ35_p = o_gq_35$par[1], GQ35_p_se = o_gq_35$se[1], GQ35_lambda = o_gq_35$par[2], GQ35_lambda_se = o_gq_35$se[2], GQ35_theta = o_gq_35$par[3], GQ35_theta_se = o_gq_35$se[3], GQ35_trt = o_gq_35$par[4], GQ35_trt_se = o_gq_35$se[4], GQ35_value = -o_gq_35$value, GQ35_convergence = o_gq_35$convergence,
                       GQ75_p = o_gq_75$par[1], GQ75_p_se = o_gq_75$se[1], GQ75_lambda = o_gq_75$par[2], GQ75_lambda_se = o_gq_75$se[2], GQ75_theta = o_gq_75$par[3], GQ75_theta_se = o_gq_75$se[3], GQ75_trt = o_gq_75$par[4], GQ75_trt_se = o_gq_75$se[4], GQ75_value = -o_gq_75$value, GQ75_convergence = o_gq_75$convergence,
                       GQ105_p = o_gq_105$par[1], GQ105_p_se = o_gq_105$se[1], GQ105_lambda = o_gq_105$par[2], GQ105_lambda_se = o_gq_105$se[2], GQ105_theta = o_gq_105$par[3], GQ105_theta_se = o_gq_105$se[3], GQ105_trt = o_gq_105$par[4], GQ105_trt_se = o_gq_105$se[4], GQ105_value = -o_gq_105$value, GQ105_convergence = o_gq_105$convergence,
                       IN_p = o_int$par[1], IN_p_se = o_int$se[1], IN_lambda = o_int$par[2], IN_lambda_se = o_int$se[2], IN_theta = o_int$par[3], IN_theta_se = o_int$se[3], IN_trt = o_int$par[4], IN_trt_se = o_int$se[4], IN_value = -o_int$value, IN_convergence = o_int$convergence)
-  rownames(output) <- NULL
+  rownames(output) =  NULL
 
   # return results
   return(output)
 }
 
 # function for estimating a model with a (potentially shared) Normal frailty term
-sim_normal_gq <- function(seed, n_individuals, n_clusters, frailty_sigma, treatment_effect, lambda, p) {
+sim_normal_gq <- function(df) {
   # packages
   if (!requireNamespace("pacman")) install.packages("pacman")
   pacman::p_load("fastGHQuad")
-
-  # generate data
-  # seed = 352486; n_individuals = 100; n_clusters = 100; frailty_sigma = 1; treatment_effect = 0.5; lambda = 3; p = 1.5
-  df = gen_data_normal(seed = seed,
-                       n_individuals = n_individuals,
-                       n_clusters = n_clusters,
-                       frailty_sigma = frailty_sigma,
-                       treatment_effect = treatment_effect,
-                       lambda = lambda,
-                       p = p)
 
   # starting parameters
   sr = survival::survreg(survival::Surv(t, d) ~ trt, dist = "weibull", data = df)
@@ -391,6 +384,8 @@ sim_normal_gq <- function(seed, n_individuals, n_clusters, frailty_sigma, treatm
   gh_rule_35 = gaussHermiteData(35)
   gh_rule_75 = gaussHermiteData(75)
   gh_rule_105 = gaussHermiteData(105)
+
+  n_clusters = unique(df$n_clusters)
 
   # quadrature likelihood with varying number of nodes
   mll_15 = function(pars) {
@@ -500,7 +495,7 @@ sim_normal_gq <- function(seed, n_individuals, n_clusters, frailty_sigma, treatm
     se = c(p = NA, lambda = NA, theta = NA, trt = NA)
   )
 
-  # functions for converting objects from nlm and bobywa to optim's format
+  # functions for converting objects from nlm and bobyqa to optim's format
   restructure_nlm = function(obj) {
     ret = list(
       par = obj$estimate,
@@ -622,18 +617,18 @@ sim_normal_gq <- function(seed, n_individuals, n_clusters, frailty_sigma, treatm
     }
   }
 
-  output = data.frame(seed = seed,
-                      n_individuals = n_individuals,
-                      n_clusters = n_clusters,
-                      frailty_sigma = frailty_sigma,
-                      treatment_effect = treatment_effect,
-                      lambda = lambda,
-                      p = p,
+  output = data.frame(n_individuals = unique(df$n_individuals),
+                      n_clusters = unique(df$n_clusters),
+                      fv_dist = unique(df$fv_dist),
+                      fv = unique(df$fv),
+                      treatment_effect = unique(df$treatment_effect),
+                      lambda = unique(df$lambda),
+                      p = unique(df$p),
                       GQ15_p = o_gq_15$par[1], GQ15_p_se = o_gq_15$se[1], GQ15_lambda = o_gq_15$par[2], GQ15_lambda_se = o_gq_15$se[2], GQ15_sigma = o_gq_15$par[3], GQ15_sigma_se = o_gq_15$se[3], GQ15_trt = o_gq_15$par[4], GQ15_trt_se = o_gq_15$se[4], GQ15_value = -o_gq_15$value, GQ15_convergence = o_gq_15$convergence,
                       GQ35_p = o_gq_35$par[1], GQ35_p_se = o_gq_35$se[1], GQ35_lambda = o_gq_35$par[2], GQ35_lambda_se = o_gq_35$se[2], GQ35_sigma = o_gq_35$par[3], GQ35_sigma_se = o_gq_35$se[3], GQ35_trt = o_gq_35$par[4], GQ35_trt_se = o_gq_35$se[4], GQ35_value = -o_gq_35$value, GQ35_convergence = o_gq_35$convergence,
                       GQ75_p = o_gq_75$par[1], GQ75_p_se = o_gq_75$se[1], GQ75_lambda = o_gq_75$par[2], GQ75_lambda_se = o_gq_75$se[2], GQ75_sigma = o_gq_75$par[3], GQ75_sigma_se = o_gq_75$se[3], GQ75_trt = o_gq_75$par[4], GQ75_trt_se = o_gq_75$se[4], GQ75_value = -o_gq_75$value, GQ75_convergence = o_gq_75$convergence,
                       GQ105_p = o_gq_105$par[1], GQ105_p_se = o_gq_105$se[1], GQ105_lambda = o_gq_105$par[2], GQ105_lambda_se = o_gq_105$se[2], GQ105_sigma = o_gq_105$par[3], GQ105_sigma_se = o_gq_105$se[3], GQ105_trt = o_gq_105$par[4], GQ105_trt_se = o_gq_105$se[4], GQ105_value = -o_gq_105$value, GQ105_convergence = o_gq_105$convergence)
-  rownames(output) <- NULL
+  rownames(output) = NULL
 
   # return results
   return(output)

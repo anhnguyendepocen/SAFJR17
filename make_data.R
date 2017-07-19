@@ -22,7 +22,7 @@ make_data <- function(n_individuals, n_clusters, fv_dist, fv, treatment_effect, 
   t = pmin(s, maxt)
   # event indicator variable
   d = as.numeric(s <= maxt)
-  out = data.frame(grpid, trt, frvec, t, d, n_individuals, n_clusters, fv_dist, fv, scenario)
+  out = data.frame(grpid, trt, frvec, t, d, n_individuals, n_clusters, fv_dist, fv, treatment_effect, lambda, p, scenario)
   attr(out, "seed") = seed
   return(out)
 }
@@ -31,19 +31,19 @@ make_data <- function(n_individuals, n_clusters, fv_dist, fv, treatment_effect, 
 if (!requireNamespace("pacman")) install.packages("pacman")
 pacman::p_load("dplyr", "tidyr")
 
-# Basic factorial design
+### data for an_vs_gq comparison
 dgms <- crossing(
   n_individuals = c(2, 30, 100, 500),
   n_clusters = c(15, 50, 1000),
   treatment_effect = c(-0.50, 0.00, 0.50),
   fv = c(0.25, 0.75, 1.25),
-  fv_dist = c("Gamma", "Log-Normal"),
+  fv_dist = "Gamma",
   lambda = 0.5,
   p = 0.6) %>%
   filter((n_individuals * n_clusters) <= 10000 & (n_individuals * n_clusters) > 300) %>%
   arrange(p, lambda, fv_dist, fv, treatment_effect, n_individuals, n_clusters)
 
-### Generate B datasets for each scenario
+### generate B datasets for each scenario
 B = 1000
 set.seed(294635876)
 lapply(1:nrow(dgms),
@@ -59,6 +59,38 @@ lapply(1:nrow(dgms),
                                    p = dgms[d,]$p,
                                    scenario = d),
                          simplify = FALSE)
-         saveRDS(object = out, file = paste0("Data/simdata", d, ".RDS"))
+         saveRDS(object = out, file = paste0("Data/simdata_an_vs_gq_", d, ".RDS"))
+       }) %>%
+  invisible()
+
+### data for normal_gq comparison
+dgms <- crossing(
+  n_individuals = c(2, 30, 100, 500),
+  n_clusters = c(15, 50, 1000),
+  treatment_effect = c(-0.50, 0.00, 0.50),
+  fv = c(0.25, 0.75, 1.25),
+  fv_dist = "Log-Normal",
+  lambda = 0.5,
+  p = 0.6) %>%
+  filter((n_individuals * n_clusters) <= 10000 & (n_individuals * n_clusters) > 300) %>%
+  arrange(p, lambda, fv_dist, fv, treatment_effect, n_individuals, n_clusters)
+
+### generate B datasets for each scenario
+B = 1000
+set.seed(1853497892)
+lapply(1:nrow(dgms),
+       function(d) {
+         cat(paste0(d, "\n"))
+         out = replicate(B,
+                         make_data(n_individuals = dgms[d,]$n_individuals,
+                                   n_clusters = dgms[d,]$n_clusters,
+                                   fv = dgms[d,]$fv,
+                                   fv_dist = dgms[d,]$fv_dist,
+                                   treatment_effect = dgms[d,]$treatment_effect,
+                                   lambda = dgms[d,]$lambda,
+                                   p = dgms[d,]$p,
+                                   scenario = d),
+                         simplify = FALSE)
+         saveRDS(object = out, file = paste0("Data/simdata_normal_gq_", d, ".RDS"))
        }) %>%
   invisible()
