@@ -8,9 +8,6 @@ source("functions.R")
 if (!requireNamespace("pacman")) install.packages("pacman")
 pacman::p_load("doSNOW", "snow", "Rmpi", "dplyr", "foreach")
 
-# Get number of procs requested
-npr = as.numeric(Sys.getenv("PBS_NUM_NODES")) * as.numeric(Sys.getenv("PBS_NUM_PPN"))
-
 # Get array ID
 TID = Sys.getenv("PBS_ARRAYID")
 
@@ -21,38 +18,10 @@ data = readRDS(paste0("Data/simdata_normal_gq_", TID, ".RDS"))
 cl <- getMPIcluster()
 registerDoSNOW(cl)
 
-# Export data and functions to the nodes
-clusterExport(cl, "data")
-clusterExport(cl, "sim_normal_gq")
-
-# Split replications in batches
-indx = split(1:length(data), ceiling(seq_along(1:length(data)) / (npr - 1)))
-
-# Start timer
-tstart = Sys.time()
-tstart
-
 # Run replications in batches
-s_list = lapply(indx,
-                function(xx) {
-                  cat("Batch:", xx, "\n")
-                  # Run sim_normal_gq on each simulated dataset
-                  ss = parLapply(cl, xx, function(xx) {
-                    out = sim_normal_gq(data[[xx]], xx)
-                    return(out)
-                  })
-                  # Bind rows here
-                  ss = bind_rows(ss)
-                  return(ss)
-                })
-
-# Stop timer
-tstop = Sys.time()
-tstop
-
-# Bind rows and calculate timediff
-s = bind_rows(s_list) %>%
-  mutate(timediff = difftime(tstop, tstart, units = "hours") %>% as.numeric())
+s = foreach(i = 1:length(data), .combine = rbind) %dopar% {
+  out = sim_normal_gq_vs_int(data[[i]])
+  return(out)}
 
 # Save the results
 saveRDS(s, paste0("Results/res_normal_gq_", TID, ".RDS"))
