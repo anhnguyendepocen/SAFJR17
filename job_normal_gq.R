@@ -20,7 +20,7 @@ registerDoSNOW(cl)
 
 # Run replications in batches
 s = foreach(i = 1:length(data), .combine = rbind) %dopar% {
-  out = sim_normal_gq_vs_int(data[[i]])
+  out = sim_normal_gq(data[[i]])
   return(out)}
 
 # Save the results
