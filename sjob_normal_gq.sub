@@ -3,9 +3,9 @@
 #PBS -o Output/out_normal_gq.txt
 #PBS -e Error/err_normal_gq.txt
 #PBS -N safjr17_sim_normal_gq
-#PBS -l walltime=12:00:00
-#PBS -l vmem=30gb
-#PBS -l nodes=5:ppn=10
+#PBS -l walltime=23:59:00
+#PBS -l pvmem=4gb
+#PBS -l nodes=6:ppn=9
 #PBS -m ea
 #PBS -t 1-54
 
